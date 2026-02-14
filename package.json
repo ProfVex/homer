@@ -1,0 +1,38 @@
+{
+  "name": "homer-cli",
+  "version": "0.1.0",
+  "description": "Autonomous agent loop powered by GitHub Issues. Orchestrates Claude Code, Codex, or any AI CLI to work through issues in parallel.",
+  "type": "module",
+  "bin": {
+    "homer": "./bin/homer",
+    "homer-watch": "./bin/homer-watch"
+  },
+  "scripts": {
+    "test": "bash tests/run.sh"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "claude",
+    "codex",
+    "github-issues",
+    "automation",
+    "cli",
+    "orchestrator"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ProfVex/homer"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux"
+  ],
+  "dependencies": {
+    "blessed": "^0.1.81"
+  }
+}

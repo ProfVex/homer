@@ -1,0 +1,488 @@
+#!/usr/bin/env node
+
+/**
+ * Homer Watch — Live terminal dashboard for Homer agent coordination
+ *
+ * Uses blessed for scrollable panels, focus management, and proper terminal UI.
+ *
+ * Usage:
+ *   homer-watch [--repo owner/repo] [--interval 5]
+ */
+
+import { execSync } from "node:child_process";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const blessed = require("blessed");
+
+// ── Parse CLI args ──────────────────────────────────────────────────────────
+
+const args = process.argv.slice(2);
+let repo = "";
+let interval = 5;
+let labelPrefix = "homer";
+
+for (let i = 0; i < args.length; i++) {
+  if ((args[i] === "--repo" || args[i] === "-r") && args[i + 1]) {
+    repo = args[++i];
+  } else if (args[i].startsWith("--repo=")) {
+    repo = args[i].split("=").slice(1).join("=");
+  } else if ((args[i] === "--interval" || args[i] === "-i") && args[i + 1]) {
+    interval = parseInt(args[++i], 10) || 5;
+  } else if (args[i] === "--label" && args[i + 1]) {
+    labelPrefix = args[++i];
+  } else if (args[i] === "-h" || args[i] === "--help") {
+    console.log(`
+Homer Watch — Live terminal dashboard
+
+USAGE:
+  homer-watch [OPTIONS]
+
+OPTIONS:
+  --repo, -r OWNER/REPO    Target repo (default: auto-detect)
+  --interval, -i SECONDS   Refresh interval (default: 5)
+  --label PREFIX            Label prefix (default: homer)
+  -h, --help                This help
+
+KEYS:
+  q, Ctrl+C    Quit
+  Tab          Cycle panel focus
+  Up/Down      Scroll focused panel
+  r            Force refresh
+  s            Sync blocked issues
+`);
+    process.exit(0);
+  }
+}
+
+// Auto-detect repo
+if (!repo) {
+  try {
+    repo = execSync("gh repo view --json nameWithOwner -q '.nameWithOwner'", {
+      encoding: "utf8",
+      timeout: 10000,
+    }).trim();
+  } catch {
+    console.error("Error: Could not detect repo. Use --repo OWNER/REPO");
+    process.exit(1);
+  }
+}
+
+// ── GitHub helpers ──────────────────────────────────────────────────────────
+
+function gh(cmd) {
+  try {
+    return execSync(cmd, { encoding: "utf8", timeout: 30000 });
+  } catch {
+    return "[]";
+  }
+}
+
+function fetchIssues() {
+  const raw = gh(
+    `gh issue list --repo "${repo}" --label "${labelPrefix}" --state all ` +
+      `--json number,title,labels,state,updatedAt,body,comments --limit 200`
+  );
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+function getLabels(issue) {
+  return (issue.labels || []).map((l) => l.name);
+}
+
+function getPriority(issue) {
+  for (const name of getLabels(issue)) {
+    if (name.startsWith("priority:")) {
+      const n = parseInt(name.split(":")[1], 10);
+      if (!isNaN(n)) return n;
+    }
+  }
+  return 99;
+}
+
+function timeAgo(isoStr) {
+  if (!isoStr) return "?";
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+function getDeps(issue) {
+  const body = issue.body || "";
+  const match = body.match(/depends on:.*?((?:#\d+[\s,]*)+)/i);
+  if (!match) return [];
+  return [...match[1].matchAll(/#(\d+)/g)].map((m) => parseInt(m[1], 10));
+}
+
+function getSessionInfo(issue) {
+  const comments = issue.comments || [];
+  for (let i = comments.length - 1; i >= 0; i--) {
+    const body = comments[i]?.body || "";
+    const m = body.match(/Homer session `([^`]+)` started at (\S+)/);
+    if (m) return { id: m[1], at: m[2] };
+  }
+  return null;
+}
+
+function categorize(issues) {
+  const b = { inProgress: [], ready: [], blocked: [], done: [], failed: [] };
+  for (const issue of issues) {
+    const labels = getLabels(issue);
+    if (labels.includes(`${labelPrefix}:in-progress`)) b.inProgress.push(issue);
+    else if (labels.includes(`${labelPrefix}:ready`)) b.ready.push(issue);
+    else if (labels.includes(`${labelPrefix}:blocked`)) b.blocked.push(issue);
+    else if (labels.includes(`${labelPrefix}:failed`)) b.failed.push(issue);
+    else if (labels.includes(`${labelPrefix}:done`) || issue.state === "CLOSED")
+      b.done.push(issue);
+  }
+  for (const key of ["inProgress", "ready", "blocked"]) {
+    b[key].sort((a, b2) => getPriority(a) - getPriority(b2) || a.number - b2.number);
+  }
+  return b;
+}
+
+// ── Blessed UI ──────────────────────────────────────────────────────────────
+
+const screen = blessed.screen({
+  smartCSR: true,
+  title: "Homer Watch",
+  fullUnicode: true,
+});
+
+// ── Header ──
+
+const headerBox = blessed.box({
+  parent: screen,
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: 1,
+  tags: true,
+  style: { fg: "cyan", bold: true },
+});
+
+// ── Progress bar ──
+
+const progressBox = blessed.box({
+  parent: screen,
+  top: 1,
+  left: 0,
+  width: "100%",
+  height: 1,
+  tags: true,
+  style: { fg: "white" },
+});
+
+// ── In Progress panel (top-left) ──
+
+const inProgressBox = blessed.box({
+  parent: screen,
+  top: 2,
+  left: 0,
+  width: "50%",
+  height: "35%-1",
+  tags: true,
+  scrollable: true,
+  alwaysScroll: true,
+  keys: true,
+  vi: true,
+  mouse: true,
+  scrollbar: { ch: "\u2588", style: { fg: "yellow" } },
+  border: { type: "line", fg: "yellow" },
+  label: " {yellow-fg}{bold}IN PROGRESS{/bold}{/yellow-fg} ",
+  style: { border: { fg: "yellow" } },
+});
+
+// ── Ready panel (top-right) ──
+
+const readyBox = blessed.box({
+  parent: screen,
+  top: 2,
+  left: "50%",
+  width: "50%",
+  height: "35%-1",
+  tags: true,
+  scrollable: true,
+  alwaysScroll: true,
+  keys: true,
+  vi: true,
+  mouse: true,
+  scrollbar: { ch: "\u2588", style: { fg: "green" } },
+  border: { type: "line", fg: "green" },
+  label: " {green-fg}{bold}READY{/bold}{/green-fg} ",
+  style: { border: { fg: "green" } },
+});
+
+// ── Blocked panel (mid-left) ──
+
+const blockedBox = blessed.box({
+  parent: screen,
+  top: "35%+1",
+  left: 0,
+  width: "50%",
+  height: "30%",
+  tags: true,
+  scrollable: true,
+  alwaysScroll: true,
+  keys: true,
+  vi: true,
+  mouse: true,
+  scrollbar: { ch: "\u2588", style: { fg: "red" } },
+  border: { type: "line", fg: "red" },
+  label: " {red-fg}{bold}BLOCKED{/bold}{/red-fg} ",
+  style: { border: { fg: "red" } },
+});
+
+// ── Done panel (mid-right) ──
+
+const doneBox = blessed.box({
+  parent: screen,
+  top: "35%+1",
+  left: "50%",
+  width: "50%",
+  height: "30%",
+  tags: true,
+  scrollable: true,
+  alwaysScroll: true,
+  keys: true,
+  vi: true,
+  mouse: true,
+  scrollbar: { ch: "\u2588", style: { fg: "green" } },
+  border: { type: "line", fg: "green" },
+  label: " {green-fg}{bold}DONE{/bold}{/green-fg} ",
+  style: { border: { fg: "green" } },
+});
+
+// ── Agents panel (bottom) ──
+
+const agentsBox = blessed.box({
+  parent: screen,
+  top: "65%+1",
+  left: 0,
+  width: "100%",
+  height: "25%-2",
+  tags: true,
+  scrollable: true,
+  alwaysScroll: true,
+  keys: true,
+  vi: true,
+  mouse: true,
+  scrollbar: { ch: "\u2588", style: { fg: "magenta" } },
+  border: { type: "line", fg: "magenta" },
+  label: " {magenta-fg}{bold}ACTIVE AGENTS{/bold}{/magenta-fg} ",
+  style: { border: { fg: "magenta" } },
+});
+
+// ── Footer ──
+
+const footerBox = blessed.box({
+  parent: screen,
+  bottom: 0,
+  left: 0,
+  width: "100%",
+  height: 1,
+  tags: true,
+  style: { fg: "white" },
+});
+
+// ── Rendering ───────────────────────────────────────────────────────────────
+
+const spinnerFrames = [
+  "\u280B","\u2819","\u2839","\u2838","\u283C","\u2834","\u2826","\u2827","\u2807","\u280F",
+];
+let tick = 0;
+let lastError = null;
+
+function renderIssueList(issues, color, opts = {}) {
+  if (issues.length === 0) return `{center}{white-fg}(none){/white-fg}{/center}`;
+
+  return issues
+    .map((issue) => {
+      const p = getPriority(issue);
+      const ago = timeAgo(issue.updatedAt);
+      const maxTitleW = Math.max(20, (screen.width / 2) - 25);
+      let title = issue.title;
+      if (title.length > maxTitleW) title = title.slice(0, maxTitleW - 1) + "\u2026";
+
+      let line = ` {${color}-fg}#${issue.number}{/${color}-fg} {white-fg}P${p}{/white-fg} ${title} {white-fg}${ago}{/white-fg}`;
+
+      if (opts.showAgent) {
+        const session = getSessionInfo(issue);
+        if (session) {
+          const sid = session.id.split("-").pop();
+          line += `\n   {magenta-fg}\u26A1 agent: ${sid}{/magenta-fg}`;
+        }
+      }
+
+      if (opts.showDeps) {
+        const deps = getDeps(issue);
+        if (deps.length > 0) {
+          line += `\n   {white-fg}\u2514 waiting: ${deps.map((d) => "#" + d).join(", ")}{/white-fg}`;
+        }
+      }
+
+      return line;
+    })
+    .join("\n");
+}
+
+function renderAgents(inProgress) {
+  if (inProgress.length === 0)
+    return "{center}{white-fg}No active agents{/white-fg}{/center}";
+
+  return inProgress
+    .map((issue) => {
+      const session = getSessionInfo(issue);
+      let title = issue.title;
+      if (title.length > 40) title = title.slice(0, 39) + "\u2026";
+
+      if (session) {
+        const ago = timeAgo(session.at);
+        return (
+          ` {magenta-fg}\u26A1{/magenta-fg} {bold}${session.id}{/bold}\n` +
+          `   Issue: {yellow-fg}#${issue.number}{/yellow-fg} ${title}\n` +
+          `   Started: ${ago}`
+        );
+      }
+      return ` {magenta-fg}\u26A1{/magenta-fg} {yellow-fg}#${issue.number}{/yellow-fg} ${title}`;
+    })
+    .join("\n\n");
+}
+
+function update() {
+  tick++;
+  const spinner = spinnerFrames[tick % spinnerFrames.length];
+  const time = new Date().toLocaleTimeString();
+
+  let issues, buckets;
+  try {
+    issues = fetchIssues();
+    buckets = categorize(issues);
+    lastError = null;
+  } catch (e) {
+    lastError = e.message;
+    footerBox.setContent(` {red-fg}Error: ${e.message}{/red-fg}`);
+    screen.render();
+    return;
+  }
+
+  const total = issues.length;
+  const doneCount = buckets.done.length;
+
+  // Header
+  headerBox.setContent(
+    ` {cyan-fg}{bold}HOMER{/bold}{/cyan-fg}  ${spinner}  {bold}${repo}{/bold}  |  ${time}  |  ${interval}s refresh`
+  );
+
+  // Progress
+  if (total > 0) {
+    const pct = Math.round((doneCount / total) * 100);
+    const barW = Math.min(Math.floor(screen.width * 0.6), 50);
+    const filled = Math.round((barW * doneCount) / total);
+    const bar =
+      "{green-fg}" + "\u2588".repeat(filled) + "{/green-fg}" +
+      "{white-fg}" + "\u2591".repeat(barW - filled) + "{/white-fg}";
+    progressBox.setContent(` ${bar} {bold}${doneCount}{/bold}/${total} (${pct}%)`);
+  } else {
+    progressBox.setContent(" {white-fg}No issues tracked{/white-fg}");
+  }
+
+  // Panels
+  inProgressBox.setLabel(
+    ` {yellow-fg}{bold}\u26A1 IN PROGRESS (${buckets.inProgress.length}){/bold}{/yellow-fg} `
+  );
+  inProgressBox.setContent(
+    renderIssueList(buckets.inProgress, "yellow", { showAgent: true })
+  );
+
+  readyBox.setLabel(
+    ` {green-fg}{bold}\u2713 READY (${buckets.ready.length}){/bold}{/green-fg} `
+  );
+  readyBox.setContent(renderIssueList(buckets.ready, "green"));
+
+  blockedBox.setLabel(
+    ` {red-fg}{bold}\u2717 BLOCKED (${buckets.blocked.length}){/bold}{/red-fg} `
+  );
+  blockedBox.setContent(
+    renderIssueList(buckets.blocked, "red", { showDeps: true })
+  );
+
+  const recentDone = buckets.done.slice(-15);
+  doneBox.setLabel(
+    ` {green-fg}{bold}\u2713 DONE (${buckets.done.length}){/bold}{/green-fg} `
+  );
+  doneBox.setContent(renderIssueList(recentDone, "green"));
+
+  agentsBox.setContent(renderAgents(buckets.inProgress));
+
+  // Footer
+  footerBox.setContent(
+    ` {white-fg}[q] Quit  [r] Refresh  [s] Sync  [Tab] Focus{/white-fg}` +
+      `  {bold}${buckets.inProgress.length}{/bold} running` +
+      `  {bold}${buckets.ready.length}{/bold} queued` +
+      `  {bold}${buckets.blocked.length}{/bold} blocked` +
+      `  {bold}${buckets.failed.length}{/bold} failed`
+  );
+
+  screen.render();
+}
+
+// ── Key bindings ────────────────────────────────────────────────────────────
+
+screen.key(["q", "C-c"], () => {
+  screen.destroy();
+  console.log("Homer Watch stopped.");
+  process.exit(0);
+});
+
+screen.key(["r"], () => {
+  footerBox.setContent(" {cyan-fg}Refreshing...{/cyan-fg}");
+  screen.render();
+  update();
+});
+
+screen.key(["s"], () => {
+  footerBox.setContent(" {cyan-fg}Syncing blocked issues...{/cyan-fg}");
+  screen.render();
+
+  try {
+    const homerBin = new URL("./homer", import.meta.url).pathname;
+    execSync(`bash "${homerBin}" sync --repo "${repo}"`, { timeout: 30000 });
+    footerBox.setContent(" {green-fg}Sync complete{/green-fg}");
+  } catch (e) {
+    footerBox.setContent(` {red-fg}Sync error: ${e.message}{/red-fg}`);
+  }
+  screen.render();
+  setTimeout(update, 1000);
+});
+
+// Tab between panels
+const panels = [inProgressBox, readyBox, blockedBox, doneBox, agentsBox];
+let focusIdx = 0;
+
+screen.key(["tab"], () => {
+  focusIdx = (focusIdx + 1) % panels.length;
+  panels[focusIdx].focus();
+  screen.render();
+});
+
+// ── Start ───────────────────────────────────────────────────────────────────
+
+update();
+const timer = setInterval(update, interval * 1000);
+
+process.on("SIGINT", () => {
+  clearInterval(timer);
+  screen.destroy();
+  console.log("Homer Watch stopped.");
+  process.exit(0);
+});
+
+screen.render();
