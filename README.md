@@ -1,14 +1,37 @@
 # Homer
 
-Autonomous agent loop powered by GitHub Issues. Orchestrates Claude Code, Codex, or any AI CLI to work through issues in parallel.
+Multi-agent TUI orchestrator for AI coding tools. Wraps Claude Code, Codex, Aider, or any AI CLI in a polished terminal dashboard with parallel agents, task management, and automated verification.
 
 ```
-Terminal 1:  homer --repo myorg/app          # agent starts working
-Terminal 2:  homer --repo myorg/app          # second agent, same repo
-Terminal 3:  homer-watch --repo myorg/app    # live dashboard
+┌──────────────────────────────────────────────────────────┐
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓│                                         │
+│▓ ◆ HOMER     ▓│  ┌──────────────────────────────────┐   │
+│▓              ▓│  │ ⬢ agent-1 · #42 ● working       │   │
+│▓ ⬢ Claude    ▓│  │                                  │   │
+│▓   v2.1.15   ▓│  │   [live terminal output]         │   │
+│▓              ▓│  │                                  │   │
+│▓ STORIES 2/5  ▓│  └──────────────────────────────────┘   │
+│▓ ████████░░░  ▓│                                         │
+│▓ ✓ Auth       ▓│                                         │
+│▓ ● Dashboard  ▓│                                         │
+│▓              ▓│                                         │
+│▓ AGENTS       ▓│                                         │
+│▓ ▸● agent-1   ▓│                                         │
+│▓  ○ agent-2   ▓│                                         │
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓│─────────────────────────────────────────│
+│ 01:23 │ ● TYPING ^A=nav │ 2/5 stories                   │
+└──────────────────────────────────────────────────────────┘
 ```
 
-Homer turns GitHub Issues into an autonomous work queue. Each issue is a task with acceptance criteria. Homer claims one, calls your AI CLI to implement it, verifies completion, and moves to the next. Multiple Homer instances coordinate through GitHub labels — no collisions, full parallel execution.
+## Features
+
+- **Multi-agent terminals** — Run up to 5 AI agents side-by-side in split panes
+- **Tool-agnostic** — Claude Code, Codex CLI, Aider, Cline, or any CLI tool
+- **Task sources** — Load from `prd.json` (Ralph-compatible) or GitHub Issues
+- **Verification loop** — Agents signal `HOMER_DONE`, Homer runs typecheck/lint/tests, re-injects errors if they fail
+- **Session persistence** — Quit and resume where you left off
+- **Project index** — Scans your codebase on startup so agents don't waste time re-scanning
+- **Agent coordination** — Agents leave notes for each other; shared context prevents duplicated work
 
 ## Install
 
@@ -18,202 +41,153 @@ npm install -g homer-cli
 
 # or clone
 git clone https://github.com/ProfVex/homer.git
-cd homer && npm link
+cd homer && npm install && npm link
 ```
 
 ### Prerequisites
 
 | Tool | Required | Install |
 |------|----------|---------|
-| `gh` | Yes | `brew install gh` then `gh auth login` |
-| `jq` | Yes | `brew install jq` |
-| `claude` | Default AI | [claude.ai/download](https://claude.ai/download) |
-| `codex` | Alternative | `npm install -g @openai/codex` |
-| `node` | For dashboard | v18+ (already installed if you use npm) |
+| Node.js | v18+ | [nodejs.org](https://nodejs.org) |
+| `gh` CLI | For GitHub issues | `brew install gh` then `gh auth login` |
+| At least one AI CLI | Yes | See below |
+
+**Supported AI CLIs** (install at least one):
+
+| Tool | Install |
+|------|---------|
+| Claude Code | [claude.ai/download](https://claude.ai/download) |
+| Codex CLI | `npm install -g @openai/codex` |
+| Aider | `pip install aider-chat` |
+| Cline | `npm install -g cline` |
 
 ## Quick Start
 
 ```bash
-# 1. Plan — decompose a feature into issues
-homer plan "Add user authentication with JWT tokens"
-
-# 2. Check the board
-homer status
-
-# 3. Start working (picks issues, implements, closes)
+# Open TUI — auto-detects tools, shows picker if multiple installed
 homer
 
-# 4. Watch (in another terminal)
-homer-watch
+# Use a specific tool
+homer --tool claude
+
+# Auto-mode: works through stories/issues without manual intervention
+homer --auto
+
+# Resume a previous session
+homer --resume
 ```
-
-## Commands
-
-### `homer`
-
-Starts the work loop. Picks the highest-priority ready issue, claims it, invokes your AI CLI, and closes it on success.
-
-```bash
-homer                              # auto-detect repo, use claude
-homer --repo owner/repo            # explicit repo
-homer --tool codex                 # use codex instead of claude
-homer --max-iterations 5           # stop after 5 issues
-homer --dry-run                    # preview without executing
-```
-
-### `homer plan <description>`
-
-Uses your AI CLI to decompose a feature description into GitHub Issues with proper labels, acceptance criteria, and dependency links.
-
-```bash
-homer plan "Add real-time notifications with WebSocket"
-homer plan "Refactor the API to use middleware pattern" --repo owner/repo
-```
-
-Each issue gets:
-- Acceptance criteria (verifiable, not vague)
-- Priority label (`priority:1` through `priority:5`)
-- State label (`homer:ready` or `homer:blocked`)
-- Dependencies (`Depends on: #1, #3`)
-
-### `homer status`
-
-Shows the issue board grouped by state:
-
-```
- HOMER  myorg/app  13:42:05
-
- ████████████░░░░░░░░░░░░░ 3/10 (30%)
-──────────────────────────────────────
- ⚡ IN PROGRESS (1)          │ ✓ READY (3)
-   #4 P1 Create auth middleware │   #6 P2 Add login page
-                                │   #7 P2 Add signup page
- ✗ BLOCKED (3)                  │   #8 P3 Password reset
-   #9 P3 User dashboard        │
-     └ waiting: #6, #7         │ ✓ DONE (3)
-                                │   #1 DB schema
-──────────────────────────────────────
- AGENTS  ⚡ a3f2→#4
-```
-
-### `homer sync`
-
-Re-evaluates blocked issues. If all dependencies are closed, unblocks them.
-
-```bash
-homer sync                         # auto-detect repo
-homer sync --repo owner/repo       # explicit repo
-```
-
-### `homer-watch`
-
-Live terminal dashboard. Refreshes every 5 seconds. Zero dependencies (pure Node.js).
-
-```bash
-homer-watch                        # auto-detect repo
-homer-watch --repo owner/repo      # explicit repo
-homer-watch --interval 10          # refresh every 10s
-```
-
-Keys: `q` quit, `r` force refresh.
 
 ## How It Works
 
-### Issue Labels (State Machine)
+1. **Homer scans your project** on startup — builds an index of exports, dependencies, and conventions
+2. **You pick a task** — from a `prd.json` file (user stories) or GitHub Issues
+3. **Homer spawns an AI agent** in a real PTY terminal with project context injected
+4. **Agent works autonomously** — you can watch, type into it, or let it run
+5. **Agent signals `HOMER_DONE`** when it thinks it's finished
+6. **Homer runs verification** — typecheck, lint, tests (auto-detected from your project)
+7. **If checks fail** — errors are re-injected into the agent to fix (tight feedback loop)
+8. **If checks pass** — story is marked complete, next task is picked up
 
-```
-                    ┌─────────────┐
-                    │ homer:ready │ ◄── created by `homer plan`
-                    └──────┬──────┘
-                           │ claimed by agent
-                    ┌──────▼──────────┐
-                    │ homer:in-progress│
-                    └──────┬──────────┘
-                  success/ │ \failure
-          ┌───────────┐    │    ┌──────────────┐
-          │ homer:done │    │    │ homer:failed │
-          └───────────┘    │    └──────────────┘
-                           │
-                    ┌──────▼───────┐
-                    │homer:blocked │ ◄── has unmet deps
-                    └──────────────┘
-```
+This verification loop is inspired by [Ralph](https://github.com/ProfVex/ralph) — the agent can't claim "done" until the code actually passes.
 
-### Multi-Agent Coordination
+## Keyboard Shortcuts
 
-Multiple Homer instances can work the same repo simultaneously:
+| Key | Action |
+|-----|--------|
+| `Enter` | Spawn agent / focus terminal |
+| `Ctrl+A` | Toggle between nav mode and terminal input |
+| `Tab` | Cycle between agent panes (in nav mode) |
+| `i` | Pick a task (stories + issues) |
+| `t` | Change AI tool |
+| `+` | Spawn another agent |
+| `1-9` | Switch to agent N |
+| `c` | Rebuild project index |
+| `w` | Show workflow history |
+| `r` | Refresh sidebar |
+| `q` / `Ctrl+C` | Quit |
 
-1. Agent A runs `homer` — claims issue #3 (labeled `homer:in-progress`)
-2. Agent B runs `homer` — sees #3 is claimed, picks #4 instead
-3. Both work in parallel on independent issues
-4. When both finish, `homer sync` unblocks any issues that depended on #3 and #4
-
-No database. No message queue. Just GitHub labels.
-
-### AI Tool Integration
-
-Homer calls your AI CLI via stdin pipe:
-
-```bash
-# Claude Code (default)
-echo "$PROMPT" | claude --dangerously-skip-permissions --print
-
-# OpenAI Codex
-echo "$PROMPT" | codex --quiet
-```
-
-The prompt includes the issue title, body (acceptance criteria, dependencies, notes), and instructions to output `HOMER_DONE` or `HOMER_BLOCKED` as a completion signal.
-
-To add a new AI tool, it just needs to:
-1. Accept a prompt via stdin
-2. Execute code changes
-3. Output results to stdout
-
-## Issue Format
-
-When creating issues manually (or via `homer plan`), use this format:
-
-```markdown
-## Story
-As a [user], I want [feature] so that [benefit].
-
-## Acceptance Criteria
-- [ ] Specific verifiable criterion
-- [ ] Another criterion
-- [ ] Lint/typecheck passes
-
-## Dependencies
-Depends on: #1, #3
-
-## Notes
-Implementation hints, file paths, context.
-```
-
-Labels: `homer`, `homer:ready` (or `homer:blocked`), `priority:N`
-
-## Configuration
-
-Homer is zero-config by default. Everything is controlled via CLI flags:
+## CLI Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--repo` | auto-detect | GitHub repo (owner/name) |
-| `--tool` | `claude` | AI CLI to use |
-| `--max-iterations` | `0` (unlimited) | Stop after N issues |
-| `--label` | `homer` | Label prefix |
-| `--dry-run` | `false` | Preview mode |
+| `--tool NAME` | auto-detect | AI CLI to use (`claude`, `codex`, `aider`, `cline`, `openrouter`) |
+| `--model MODEL` | — | Model selection (for aider/openrouter) |
+| `--repo OWNER/REPO` | auto-detect | GitHub repo for issues |
+| `--auto` | off | Auto-claim and work through tasks |
+| `--agents N` | 5 | Max concurrent agents |
+| `--label PREFIX` | `homer` | Label prefix for GitHub issues |
+| `--permission-mode MODE` | `bypassPermissions` | Claude Code permission mode |
+| `--resume` | — | Auto-resume previous session |
+| `--fresh` | — | Start clean, ignore previous session |
+| `-h, --help` | — | Show help |
 
-## vs Ralph
+## Task Sources
 
-| | Ralph | Homer |
-|---|---|---|
-| Task store | `prd.json` flat file | GitHub Issues |
-| Progress | `progress.txt` append log | Issue comments |
-| Ordering | Linear priority | Dependency graph |
-| Parallelism | Single session | Multi-agent |
-| Visibility | Local to machine | Team-visible on GitHub |
-| Memory | Amnesiac between iterations | Comments preserve context |
-| Reuse | Stories die with branch | Issues persist, commentable |
+Homer supports two task sources that can be used together:
+
+### 1. PRD Stories (`prd.json`)
+
+Drop a `prd.json` in your project root with user stories. Homer picks them up automatically.
+
+```json
+{
+  "project": "MyApp",
+  "branchName": "homer/feature",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add user login",
+      "description": "As a user, I want to log in with email and password.",
+      "acceptanceCriteria": ["Login form renders", "JWT token stored", "Typecheck passes"],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
+```
+
+### 2. GitHub Issues
+
+With `--repo` (or auto-detected), Homer shows all open issues. You pick one, and it's sent to the agent with full context.
+
+Issues with checkbox acceptance criteria are parsed automatically. Label issues with `homer:ready` to use auto-mode.
+
+## Project Context
+
+Homer creates a `.homer/` directory in your project with:
+
+- `context.md` — Auto-generated index of exports, dependencies, and recent agent work
+- `progress.txt` — Log of completed stories
+
+This directory is auto-added to `.gitignore`. Agents read `context.md` on startup to avoid re-scanning your codebase.
+
+Global data lives in `~/.homer/`:
+
+- `sessions/` — Session snapshots for resume
+- `context/{repo}/` — Project index, agent notes, shared context
+
+## Verification
+
+Homer auto-detects verification commands from your project:
+
+| Project Type | Detected Commands |
+|-------------|-------------------|
+| TypeScript | `npm run typecheck` or `npx tsc --noEmit` |
+| ESLint | `npm run lint` |
+| Jest/Vitest | `npm test` |
+| Python + mypy | `mypy .` |
+| Python + pytest | `pytest` |
+| Python + ruff | `ruff check .` |
+| Makefile | `make check` |
+
+When an agent signals `HOMER_DONE`, all detected commands run. If any fail, errors are fed back to the agent.
+
+## Platform Support
+
+- **macOS** — Full support
+- **Linux** — Full support
+- **Windows** — Not supported (node-pty platform limitation)
 
 ## License
 
