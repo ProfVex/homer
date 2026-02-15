@@ -1,0 +1,104 @@
+{
+  "project": "Homer",
+  "branchName": "homer/mvp-release",
+  "description": "Fix security issues, remove dead code, update README, add tests for MVP release",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Sanitize shell inputs in github.js",
+      "description": "As a user downloading Homer, I need shell command arguments to be sanitized so that malicious repo names or label values cannot execute arbitrary commands on my machine.",
+      "acceptanceCriteria": [
+        "Create a shellEscape(str) helper that escapes shell metacharacters (single-quote wrapping with internal quote escaping)",
+        "Apply shellEscape to all interpolated values in github.js: repo, prefix, sessionId, num, summary, desc, color",
+        "Verify: a repo name like \"foo;rm -rf /\" does not execute the injected command",
+        "Verify: gh commands still work correctly with normal repo names like owner/repo",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "All gh() calls in github.js interpolate user-controlled strings directly into shell commands. Use single-quote escaping: str.replace(/'/g, \"'\\\"'\\\"'\") wrapped in single quotes."
+    },
+    {
+      "id": "US-002",
+      "title": "Remove dead code and unused dependency",
+      "description": "As a developer, I want to ship only code that is actually used so the install is clean and users aren't confused by stale files.",
+      "acceptanceCriteria": [
+        "Delete lib/workloop.js (superseded by app.js agent management)",
+        "Delete empty dashboard/ directory",
+        "Remove term.js from package.json dependencies",
+        "Run npm install to update package-lock.json",
+        "Remove the npm test script or point it at a real test (see US-005)",
+        "Verify: node -e \"import('./lib/app.js')\" still succeeds",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "workloop.js is the v1 loop, not imported by app.js. term.js is listed in dependencies but never imported by any file. dashboard/ is an empty directory."
+    },
+    {
+      "id": "US-003",
+      "title": "Rewrite README.md for TUI architecture",
+      "description": "As a new user, I want an accurate README so I can understand what Homer does and how to install and use it.",
+      "acceptanceCriteria": [
+        "README title and description match the actual TUI product (not the v1 stdin-pipe architecture)",
+        "Install section covers: prerequisites (node 18+, gh CLI, at least one AI CLI), npm install -g homer-cli, and git clone + npm link",
+        "Quick Start shows: homer (opens TUI), homer --tool claude, homer --auto",
+        "Features section covers: multi-agent TUI, PRD stories, GitHub issues, verification loop, session persistence, project index",
+        "Keyboard shortcuts section lists all actual keys: i, t, +, 1-9, Enter, Ctrl+A, Tab, c, w, r, q",
+        "CLI flags section lists all actual flags from parseArgs(): --repo, --tool, --model, --auto, --agents, --label, --permission-mode, --resume, --fresh, --init",
+        "Remove all references to: homer plan, homer status, homer sync, homer-watch, homer-watch, --max-iterations, --dry-run, stdin pipe architecture",
+        "Add a 'How It Works' section explaining: TUI spawns PTY → agent works → signals HOMER_DONE → Homer runs verification → re-injects errors or marks done",
+        "Include a screenshot placeholder or ASCII art of the TUI layout"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Current README describes v1 architecture with multiple CLI commands that no longer exist. The actual product is a single TUI command."
+    },
+    {
+      "id": "US-004",
+      "title": "Update .gitignore and fix auto-append behavior",
+      "description": "As a user, I don't want Homer silently modifying my .gitignore without telling me, and the project .gitignore should cover all generated files.",
+      "acceptanceCriteria": [
+        "Project .gitignore includes: node_modules/, .DS_Store, *.log, .env, .homer/, .claude/, coverage/, dist/, *.tgz",
+        "In context.js writeProjectContext(): change the auto-append to .gitignore to log a message instead of silently modifying (or make it opt-in)",
+        "Alternative: keep auto-append but add a comment '# Added by Homer' before the .homer/ line so users know what changed it",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "context.js line 481 silently appends .homer/ to the user's project .gitignore. This is surprising behavior for a CLI tool."
+    },
+    {
+      "id": "US-005",
+      "title": "Add basic test suite",
+      "description": "As a developer, I want basic tests to catch regressions and verify core functionality works.",
+      "acceptanceCriteria": [
+        "Create tests/ directory with at least 3 test files",
+        "Test 1: tools.js — detectTools() returns array, each item has id/name/command/available fields",
+        "Test 2: tasks.js — loadPRD() with a fixture prd.json returns correct structure, nextStory() returns first incomplete story, prdProgress() returns correct counts",
+        "Test 3: context.js — repoSlug() produces valid slugs, buildSystemPrompt() returns string containing HOMER_DONE instruction",
+        "Update package.json test script to run the tests (node --test or a simple runner)",
+        "npm test passes with exit code 0",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "Currently npm test points at tests/run.sh which doesn't exist. Use Node 18+ built-in test runner (node --test) to avoid adding a test framework dependency."
+    },
+    {
+      "id": "US-006",
+      "title": "Git commit all lib/ files and tag v0.2.0",
+      "description": "As a maintainer, I need all source code committed to git so the repo is complete when users clone it.",
+      "acceptanceCriteria": [
+        "git add lib/ — all 8 files in lib/ are staged",
+        "All other changes (package.json, .gitignore, deleted files) are staged",
+        "Single commit with message describing the v2 TUI rewrite",
+        "git tag v0.2.0",
+        "git status shows clean working tree"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "CRITICAL: lib/ is currently untracked. The entire application code has never been committed. This must be done before any release."
+    }
+  ]
+}

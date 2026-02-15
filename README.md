@@ -1,14 +1,21 @@
 # Homer
 
+> *"D'oh!" — Homer Simpson*
+
+<!-- homer_banner.png — add your own Homer-themed banner here -->
+
 Multi-agent TUI orchestrator for AI coding tools. Wraps Claude Code, Codex, Aider, or any AI CLI in a polished terminal dashboard with parallel agents, task management, and automated verification.
+
+Named after Homer Simpson — he may not look like he's working, but somehow things get done. Homer orchestrates your AI agents so you don't have to.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │▓▓▓▓▓▓▓▓▓▓▓▓▓▓│                                         │
 │▓ ◆ HOMER     ▓│  ┌──────────────────────────────────┐   │
-│▓              ▓│  │ ⬢ agent-1 · #42 ● working       │   │
-│▓ ⬢ Claude    ▓│  │                                  │   │
-│▓   v2.1.15   ▓│  │   [live terminal output]         │   │
+│▓  active (1)  ▓│  │ ⬢ agent-1 · #42 ● working       │   │
+│▓              ▓│  │                                  │   │
+│▓ ⬢ Claude    ▓│  │   [live terminal output]         │   │
+│▓   v2.1.15   ▓│  │                                  │   │
 │▓              ▓│  │                                  │   │
 │▓ STORIES 2/5  ▓│  └──────────────────────────────────┘   │
 │▓ ████████░░░  ▓│                                         │
@@ -19,7 +26,8 @@ Multi-agent TUI orchestrator for AI coding tools. Wraps Claude Code, Codex, Aide
 │▓ ▸● agent-1   ▓│                                         │
 │▓  ○ agent-2   ▓│                                         │
 │▓▓▓▓▓▓▓▓▓▓▓▓▓▓│─────────────────────────────────────────│
-│ 01:23 │ ● TYPING ^A=nav │ 2/5 stories                   │
+│ 01:23 │ ● TYPING ^A=nav  ^N=agent  ^G=join │ 2/5        │
+│ + agent  j join  t tool  1-2 switch  q quit              │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -92,19 +100,29 @@ This verification loop is inspired by [Ralph](https://github.com/ProfVex/ralph) 
 
 ## Keyboard Shortcuts
 
+**Nav mode** (default — press `Ctrl+A` to enter):
+
 | Key | Action |
 |-----|--------|
 | `Enter` | Spawn agent / focus terminal |
-| `Ctrl+A` | Toggle between nav mode and terminal input |
-| `Tab` | Cycle between agent panes (in nav mode) |
+| `+` | Spawn another agent |
+| `j` | Join agent (picker overlay) |
 | `i` | Pick a task (stories + issues) |
 | `t` | Change AI tool |
-| `+` | Spawn another agent |
+| `Tab` | Cycle between agent panes |
 | `1-9` | Switch to agent N |
 | `c` | Rebuild project index |
 | `w` | Show workflow history |
 | `r` | Refresh sidebar |
 | `q` / `Ctrl+C` | Quit |
+
+**Terminal mode** (typing into an agent — press `Ctrl+A` to exit):
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+A` | Exit to nav mode |
+| `Ctrl+N` | Spawn new agent (without leaving terminal) |
+| `Ctrl+G` | Join/switch agent (without leaving terminal) |
 
 ## CLI Flags
 
@@ -188,6 +206,26 @@ When an agent signals `HOMER_DONE`, all detected commands run. If any fail, erro
 - **macOS** — Full support
 - **Linux** — Full support
 - **Windows** — Not supported (node-pty platform limitation)
+
+## Ralph
+
+<!-- ralph_banner.png — add your own Ralph-themed banner here -->
+
+> *"I'm helping!"* — Ralph Wiggum
+
+Homer's verification loop is directly inspired by **Ralph** — an autonomous agent system that enforces a tight feedback loop: agents can't claim "done" until tests actually pass.
+
+Ralph uses `prd.json` files (Product Requirement Documents) to define user stories with acceptance criteria. Homer reads the same format, making them fully compatible.
+
+<!-- Link to Ralph repo when published -->
+<!-- See [Ralph on GitHub](https://github.com/ProfVex/ralph) for the standalone agent runner. -->
+
+## Credits
+
+- **Homer** and **Ralph** are named after characters from *The Simpsons*, created by Matt Groening. All Simpsons references are used as fan tributes — this project has no affiliation with 20th Century Fox or The Simpsons.
+- Built with [blessed](https://github.com/chjj/blessed) for the TUI and [node-pty](https://github.com/microsoft/node-pty) for real terminal emulation.
+- Designed to wrap [Claude Code](https://claude.ai), [Codex CLI](https://github.com/openai/codex), [Aider](https://github.com/paul-gauthier/aider), and other AI coding tools.
+- Created by [@ProfVex](https://github.com/ProfVex).
 
 ## License
 
