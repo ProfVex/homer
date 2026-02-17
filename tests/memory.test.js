@@ -10,6 +10,7 @@ import {
   recordSuccess,
   recordFailure,
   recordEpisode,
+  recordContextCompaction,
   updateFileKnowledge,
   upsertRule,
   strengthenRule,
@@ -29,6 +30,7 @@ import {
   getVerificationEpisodes,
   getErrorFileRelations,
   getLastInjectedRuleIds,
+  getLearningMetrics,
   // Compat
   extractMemories,
   consolidate,
@@ -1218,6 +1220,142 @@ describe("memory.js v2", () => {
       assert.ok("errorFileRelations" in stats, "should have errorFileRelations field");
       assert.equal(stats.verificationEpisodes, 1);
       assert.equal(stats.errorFileRelations, 1);
+    });
+  });
+
+  // ── Context Compaction ────────────────────────────────────────────────
+
+  describe("recordContextCompaction", () => {
+    it("touches mentioned files", () => {
+      recordContextCompaction("agent-1", "story:US-001", {
+        filePaths: ["lib/auth.js", "lib/db.js"],
+        errors: [],
+        approachNote: null,
+      });
+
+      const auth = getFileKnowledge("lib/auth.js");
+      assert.ok(auth, "should create file_knowledge for auth.js");
+      assert.equal(auth.touch_count, 1);
+
+      const db = getFileKnowledge("lib/db.js");
+      assert.ok(db, "should create file_knowledge for db.js");
+    });
+
+    it("creates rules from mid-work errors", () => {
+      recordContextCompaction("agent-1", "story:US-001", {
+        filePaths: ["lib/auth.js"],
+        errors: ["Type mismatch in login function", "Cannot find module 'bcrypt'"],
+        approachNote: null,
+      });
+
+      const rules = getDb().query("SELECT * FROM repo_rules WHERE source LIKE 'compaction:%'").all();
+      assert.ok(rules.length >= 1, "should create rules from errors");
+      assert.ok(rules[0].rule.includes("Mid-work error"), "rule should mention mid-work error");
+      assert.equal(rules[0].confidence, 0.3, "should have low initial confidence");
+    });
+
+    it("appends approach note to task_run", () => {
+      // First create a task_run
+      const result = { passed: false, results: [{ name: "test", cmd: "bun test", passed: false, output: "fail", errorKey: "test:fail" }] };
+      recordVerification("agent-1", "story:US-001", result, []);
+
+      recordContextCompaction("agent-1", "story:US-001", {
+        filePaths: [],
+        errors: [],
+        approachNote: "Trying to refactor the auth module by splitting into separate concerns",
+      });
+
+      const run = getDb().query("SELECT notes FROM task_runs WHERE agent_id = 'agent-1'").get();
+      assert.ok(run.notes.includes("[compaction]"), "should annotate with [compaction]");
+      assert.ok(run.notes.includes("refactor"), "should include the approach note");
+    });
+
+    it("does nothing when DB is closed", () => {
+      closeMemory();
+      // Should not throw
+      recordContextCompaction("agent-1", "story:US-001", {
+        filePaths: ["lib/auth.js"],
+        errors: ["some error"],
+      });
+    });
+
+    it("handles null taskKey gracefully", () => {
+      recordContextCompaction("agent-1", null, {
+        filePaths: ["lib/auth.js"],
+        errors: [],
+        approachNote: "working on stuff",
+      });
+      // Should touch file but not try to update task_run
+      const fk = getFileKnowledge("lib/auth.js");
+      assert.ok(fk, "should still touch files");
+    });
+  });
+
+  // ── Learning Metrics ──────────────────────────────────────────────────
+
+  describe("getLearningMetrics", () => {
+    it("returns metrics object with all fields", () => {
+      // Create some data
+      const result = { passed: false, results: [{ name: "test", cmd: "bun test", passed: false, output: "fail", errorKey: "test:fail" }] };
+      recordVerification("agent-1", "story:US-001", result, ["lib/auth.js"]);
+      recordSuccess("agent-1", "story:US-001", ["lib/auth.js"], 2);
+      upsertRule("repo", "Always test first", 0.8);
+
+      const metrics = getLearningMetrics();
+      assert.ok(metrics, "should return metrics object");
+      assert.ok("avgVerifyAttempts" in metrics, "should have avgVerifyAttempts");
+      assert.ok("totalTasksPassed" in metrics, "should have totalTasksPassed");
+      assert.ok("rules" in metrics, "should have rules section");
+      assert.ok("solutions" in metrics, "should have solutions section");
+      assert.ok("topRules" in metrics, "should have topRules");
+      assert.ok("recentEpisodes" in metrics, "should have recentEpisodes");
+      assert.ok("topErrorFiles" in metrics, "should have topErrorFiles");
+      assert.ok("learningVelocity" in metrics, "should have learningVelocity");
+      assert.ok("outcomes" in metrics, "should have outcomes");
+    });
+
+    it("computes correct averages", () => {
+      const result1 = { passed: true, results: [] };
+      recordVerification("agent-1", "story:US-001", result1, []);
+      getDb().query("UPDATE task_runs SET outcome = 'passed', attempts = 3 WHERE agent_id = 'agent-1'").run();
+
+      const result2 = { passed: true, results: [] };
+      recordVerification("agent-2", "story:US-002", result2, []);
+      getDb().query("UPDATE task_runs SET outcome = 'passed', attempts = 1 WHERE agent_id = 'agent-2'").run();
+
+      const metrics = getLearningMetrics();
+      assert.equal(metrics.avgVerifyAttempts, 2.0, "should average to 2.0");
+      assert.equal(metrics.totalTasksPassed, 2);
+    });
+
+    it("includes resolution rate", () => {
+      const r1 = { passed: false, results: [{ name: "test", cmd: "bun test", passed: false, output: "fail", errorKey: "test:a" }] };
+      const r2 = { passed: false, results: [{ name: "test", cmd: "bun test", passed: false, output: "fail", errorKey: "test:b" }] };
+      recordVerification("agent-1", "story:US-001", r1, []);
+      recordVerification("agent-2", "story:US-002", r2, []);
+      recordSuccess("agent-1", "story:US-001", [], 1);
+
+      const metrics = getLearningMetrics();
+      assert.equal(metrics.solutions.total, 2);
+      assert.equal(metrics.solutions.resolved, 1);
+      assert.equal(metrics.solutions.resolutionRate, 50);
+    });
+
+    it("returns null when DB is closed", () => {
+      closeMemory();
+      const metrics = getLearningMetrics();
+      assert.equal(metrics, null);
+    });
+
+    it("includes outcome distribution", () => {
+      recordFailure("agent-1", "story:US-001", "failed", "failed");
+      recordFailure("agent-2", "story:US-002", "blocked", "blocked");
+      const result = { passed: true, results: [] };
+      recordVerification("agent-3", "story:US-003", result, []);
+
+      const metrics = getLearningMetrics();
+      assert.ok("failed" in metrics.outcomes || "passed" in metrics.outcomes,
+        "outcomes should contain task results");
     });
   });
 });

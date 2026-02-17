@@ -9,6 +9,8 @@ import {
   prdProgress,
   detectVerifyCommands,
   buildStoryPrompt,
+  decomposeStory,
+  buildSubtaskPrompt,
 } from "../lib/tasks.js";
 
 // Test fixture
@@ -173,6 +175,123 @@ describe("tasks.js", () => {
       assert.ok(prompt.includes("Criterion 1"), "should include criteria");
       assert.ok(prompt.includes("HOMER_DONE"), "should include done signal");
       assert.ok(prompt.includes("HOMER_BLOCKED"), "should include blocked signal");
+    });
+  });
+
+  // ── Story Decomposition ────────────────────────────────────────────
+
+  describe("decomposeStory()", () => {
+    it("decomposes story with >2 acceptance criteria into sub-tasks", () => {
+      const story = {
+        id: "US-010",
+        title: "Add authentication",
+        description: "Full auth system",
+        acceptanceCriteria: [
+          "Login form with email/password",
+          "JWT token generation",
+          "Password hashing with bcrypt",
+          "Middleware for protected routes",
+        ],
+        priority: 1,
+      };
+
+      const subtasks = decomposeStory(story);
+      assert.ok(subtasks, "should return subtasks array");
+      assert.equal(subtasks.length, 4, "should create one subtask per criterion");
+      assert.equal(subtasks[0].id, "US-010-1");
+      assert.equal(subtasks[0].parentId, "US-010");
+      assert.ok(subtasks[0].title.includes("Add authentication"));
+      assert.ok(subtasks[0].title.includes("Login form"));
+      assert.equal(subtasks[0].criterion, "Login form with email/password");
+      assert.equal(subtasks[0].passes, false);
+    });
+
+    it("returns null for story with <=2 criteria", () => {
+      const story = {
+        id: "US-011",
+        title: "Simple fix",
+        description: "Just fix it",
+        acceptanceCriteria: ["Fix the bug", "Tests pass"],
+        priority: 1,
+      };
+      const result = decomposeStory(story);
+      assert.equal(result, null, "should not decompose stories with <=2 criteria");
+    });
+
+    it("returns null for story without acceptance criteria", () => {
+      const story = { id: "US-012", title: "No AC" };
+      const result = decomposeStory(story);
+      assert.equal(result, null);
+    });
+
+    it("inherits priority from parent", () => {
+      const story = {
+        id: "US-013",
+        title: "Prioritized",
+        description: "With priority",
+        acceptanceCriteria: ["A", "B", "C"],
+        priority: 5,
+      };
+      const subtasks = decomposeStory(story);
+      assert.ok(subtasks);
+      for (const st of subtasks) {
+        assert.equal(st.priority, 5, "subtask should inherit parent priority");
+      }
+    });
+  });
+
+  describe("buildSubtaskPrompt()", () => {
+    const parentStory = {
+      id: "US-010",
+      title: "Add authentication",
+      description: "Full auth system with login, JWT, bcrypt",
+      acceptanceCriteria: [
+        "Login form with email/password",
+        "JWT token generation",
+        "Password hashing with bcrypt",
+      ],
+    };
+
+    it("focuses on the single criterion", () => {
+      const subtask = {
+        id: "US-010-1",
+        parentId: "US-010",
+        title: "Add authentication: Login form with email/password",
+        criterion: "Login form with email/password",
+      };
+
+      const prompt = buildSubtaskPrompt(subtask, parentStory, null, []);
+      assert.ok(prompt.includes("Sub-task US-010-1"), "should include subtask id");
+      assert.ok(prompt.includes("YOUR CRITERION"), "should highlight the criterion");
+      assert.ok(prompt.includes("Login form with email/password"), "should include the criterion");
+      assert.ok(prompt.includes("OTHER CRITERIA"), "should list other criteria for awareness");
+      assert.ok(prompt.includes("HOMER_DONE"), "should include done signal");
+    });
+
+    it("includes sibling notes from completed sub-tasks", () => {
+      const subtask = {
+        id: "US-010-2",
+        parentId: "US-010",
+        title: "Add authentication: JWT token generation",
+        criterion: "JWT token generation",
+      };
+      const siblingNotes = ["Login form with email/password"];
+
+      const prompt = buildSubtaskPrompt(subtask, parentStory, null, siblingNotes);
+      assert.ok(prompt.includes("ALREADY COMPLETED"), "should show completed siblings");
+      assert.ok(prompt.includes("Login form"), "should include the completed criterion");
+    });
+
+    it("includes parent context", () => {
+      const subtask = {
+        id: "US-010-1",
+        parentId: "US-010",
+        criterion: "Login form with email/password",
+      };
+
+      const prompt = buildSubtaskPrompt(subtask, parentStory, null, []);
+      assert.ok(prompt.includes("Part of Story US-010"), "should reference parent story");
+      assert.ok(prompt.includes("Full auth system"), "should include parent description");
     });
   });
 });

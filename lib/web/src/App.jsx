@@ -5,6 +5,7 @@ import { Roster } from "@/components/Roster";
 import { RepoTree } from "@/components/RepoTree";
 import { DAGGraph } from "@/components/graph/DAGGraph";
 import { TerminalView } from "@/components/TerminalView";
+import { MemoryPanel } from "@/components/MemoryPanel";
 import { ResumeModal } from "@/components/ResumeModal";
 
 export default function App() {
@@ -57,6 +58,11 @@ export default function App() {
           <div className="rounded-2xl bg-mantle/60 border border-surface0/15 overflow-hidden shrink-0">
             <RepoTree files={homer.files} getConflicts={homer.getConflicts} />
           </div>
+          {homer.memoryData && (
+            <div className="rounded-2xl bg-mantle/60 border border-surface0/15 overflow-hidden shrink-0 max-h-[300px]">
+              <MemoryPanel memory={homer.memoryData} onRefresh={homer.fetchMemory} />
+            </div>
+          )}
         </div>
 
         {/* Center — DAG Graph (hero) */}

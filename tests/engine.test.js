@@ -115,3 +115,36 @@ describe("stripAnsi", () => {
     expect(stripAnsi("\x1b[1;32mbold green\x1b[0m normal")).toBe("bold green normal");
   });
 });
+
+describe("HomerEngine subtask tracking", () => {
+  test("should initialize subtaskMap", () => {
+    const engine = new HomerEngine();
+    expect(engine.subtaskMap).toBeDefined();
+    expect(engine.subtaskMap).toBeInstanceOf(Map);
+    expect(engine.subtaskMap.size).toBe(0);
+  });
+
+  test("_trimBuffer should not crash without memory initialized", () => {
+    const engine = new HomerEngine();
+    const agent = {
+      id: "agent-1",
+      outputBuffer: "x".repeat(400 * 1024), // > BUFFER_TRIM_KB
+      verifyHistory: [],
+    };
+    // Should not throw even without memory DB
+    expect(() => engine._trimBuffer(agent)).not.toThrow();
+    expect(agent.outputBuffer.length).toBeLessThan(400 * 1024);
+  });
+
+  test("_extractAndStoreContext should not throw without memory", () => {
+    const engine = new HomerEngine();
+    const agent = {
+      id: "agent-1",
+      outputBuffer: "Working on lib/auth.js and lib/types.ts\nError: Type mismatch\n",
+      story: { id: "US-001" },
+      verifyHistory: [],
+    };
+    // Should not throw even without DB
+    expect(() => engine._extractAndStoreContext(agent)).not.toThrow();
+  });
+});
