@@ -29,6 +29,30 @@
   --color-rosewater: #f5e0dc;
 }
 
+/* ── shadcn/ui CSS Variables (Catppuccin Mocha) ───────────────── */
+:root {
+  --background: 232 23% 15%;
+  --foreground: 226 64% 88%;
+  --card: 240 21% 12%;
+  --card-foreground: 226 64% 88%;
+  --popover: 240 21% 12%;
+  --popover-foreground: 226 64% 88%;
+  --primary: 231 97% 72%;
+  --primary-foreground: 240 23% 9%;
+  --secondary: 233 12% 21%;
+  --secondary-foreground: 226 64% 88%;
+  --muted: 231 11% 34%;
+  --muted-foreground: 228 24% 72%;
+  --accent: 233 12% 21%;
+  --accent-foreground: 226 64% 88%;
+  --destructive: 343 81% 75%;
+  --destructive-foreground: 240 23% 9%;
+  --border: 232 12% 28%;
+  --input: 232 12% 28%;
+  --ring: 231 97% 72%;
+  --radius: 0.5rem;
+}
+
 /* ── Base ─────────────────────────────────────────────────────── */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -51,36 +75,6 @@ pre, code, .font-mono {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-surface0); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-surface1); }
-
-/* ── ANSI Color Classes (terminal output rendering) ───────────── */
-.ansi-bold { font-weight: 600; }
-.ansi-dim { opacity: 0.5; }
-.ansi-italic { font-style: italic; }
-.ansi-underline { text-decoration: underline; }
-.ansi-fg-black { color: #45475a; }
-.ansi-fg-red { color: #f38ba8; }
-.ansi-fg-green { color: #a6e3a1; }
-.ansi-fg-yellow { color: #f9e2af; }
-.ansi-fg-blue { color: #89b4fa; }
-.ansi-fg-magenta { color: #cba6f7; }
-.ansi-fg-cyan { color: #89dceb; }
-.ansi-fg-white { color: #cdd6f4; }
-.ansi-fg-bright-black { color: #585b70; }
-.ansi-fg-bright-red { color: #f38ba8; }
-.ansi-fg-bright-green { color: #a6e3a1; }
-.ansi-fg-bright-yellow { color: #f9e2af; }
-.ansi-fg-bright-blue { color: #89b4fa; }
-.ansi-fg-bright-magenta { color: #cba6f7; }
-.ansi-fg-bright-cyan { color: #89dceb; }
-.ansi-fg-bright-white { color: #cdd6f4; }
-.ansi-bg-black { background: #45475a; }
-.ansi-bg-red { background: #f38ba8; }
-.ansi-bg-green { background: #a6e3a1; }
-.ansi-bg-yellow { background: #f9e2af; }
-.ansi-bg-blue { background: #89b4fa; }
-.ansi-bg-magenta { background: #cba6f7; }
-.ansi-bg-cyan { background: #89dceb; }
-.ansi-bg-white { background: #cdd6f4; }
 
 /* ── React Flow dark theme overrides ─────────────────────────── */
 .react-flow__background { background: transparent !important; }

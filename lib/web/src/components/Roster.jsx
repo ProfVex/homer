@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { cn, ROLES, STATUS_COLORS, formatElapsed, getHomerAvatar } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 function VerifyDots({ verify, maxVerify = 5 }) {
   if (!verify || verify.length === 0) return null;
@@ -127,7 +128,12 @@ export function Roster({ agents, selectedId, onSelect, onSpawn, files, verify })
               )}
             >
               <div className="flex items-center gap-2">
-                <img src={avatar.src} alt={avatar.name} title={avatar.name} className="w-8 h-8 shrink-0 rounded" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <img src={avatar.src} alt={avatar.name} className="w-8 h-8 shrink-0 rounded" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{avatar.name}</TooltipContent>
+                </Tooltip>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <StatusDot status={agent.status} />

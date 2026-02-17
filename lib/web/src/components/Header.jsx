@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export function Header({ state, onSpawn, onSetTool }) {
   const { agents, tools, activeTool, prd, memory, repo } = state;
@@ -39,16 +40,21 @@ export function Header({ state, onSpawn, onSetTool }) {
 
       {/* Controls */}
       <div className="flex items-center gap-2">
-        <select
-          className="bg-surface0/40 border border-surface0/60 rounded-lg px-2.5 py-1 text-xs text-text outline-none focus:border-lavender/50 transition-colors"
-          value={activeTool || ""}
-          onChange={(e) => onSetTool(e.target.value)}
-        >
-          <option value="">Tool...</option>
-          {tools.map(t => (
-            <option key={t.id} value={t.id}>{t.name}</option>
-          ))}
-        </select>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <select
+              className="bg-surface0/40 border border-surface0/60 rounded-lg px-2.5 py-1 text-xs text-text outline-none focus:border-lavender/50 transition-colors"
+              value={activeTool || ""}
+              onChange={(e) => onSetTool(e.target.value)}
+            >
+              <option value="">Tool...</option>
+              {tools.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Select AI tool for new agents</TooltipContent>
+        </Tooltip>
 
         <button
           onClick={() => onSpawn()}

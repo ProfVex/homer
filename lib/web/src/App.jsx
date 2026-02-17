@@ -7,6 +7,7 @@ import { DAGGraph } from "@/components/graph/DAGGraph";
 import { TerminalView } from "@/components/TerminalView";
 import { MemoryPanel } from "@/components/MemoryPanel";
 import { ResumeModal } from "@/components/ResumeModal";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function App() {
   const homer = useHomer();
@@ -35,6 +36,7 @@ export default function App() {
   const handleSelect = useCallback((id) => setSelectedId(id), []);
 
   return (
+    <TooltipProvider>
     <div className="h-screen flex flex-col overflow-hidden bg-base">
       <Header
         state={homer.state}
@@ -65,8 +67,8 @@ export default function App() {
           )}
         </div>
 
-        {/* Center — DAG Graph (hero) */}
-        <div className="flex-1 overflow-hidden rounded-2xl bg-crust/40 border border-surface0/15">
+        {/* Center — DAG Graph (compact) */}
+        <div className="w-[35%] min-w-[300px] max-w-[500px] shrink-0 overflow-hidden rounded-2xl bg-crust/40 border border-surface0/15">
           <DAGGraph
             agents={homer.state.agents}
             files={homer.files}
@@ -78,8 +80,8 @@ export default function App() {
           />
         </div>
 
-        {/* Right — Terminal output for selected agent */}
-        <div className="flex-1 min-w-[500px] flex flex-col overflow-hidden rounded-2xl bg-crust/40 border border-surface0/15">
+        {/* Right — Terminal output (hero) */}
+        <div className="flex-1 min-w-[400px] flex flex-col overflow-hidden rounded-2xl bg-crust/40 border border-surface0/15">
           <TerminalView
             agent={selectedAgent}
             onOutput={homer.onOutput}
@@ -98,5 +100,6 @@ export default function App() {
 
       <ResumeModal data={homer.resumeData} onResume={homer.resumeSession} />
     </div>
+    </TooltipProvider>
   );
 }

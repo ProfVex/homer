@@ -1,5 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 import { cn, STATUS_COLORS, ROLES, formatElapsed, getHomerAvatar } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const DIR_COLORS = {
   src: "#89b4fa",
@@ -107,16 +108,21 @@ export function AgentNode({ data }) {
           <div className="flex items-center gap-1.5">
             <div className="flex gap-0.5">
               {verifyAttempts.map((v, i) => (
-                <span
-                  key={i}
-                  className={cn(
-                    "w-2.5 h-2.5 rounded-full text-[6px] flex items-center justify-center font-bold",
-                    v.passed ? "bg-green/30 text-green" : "bg-red/30 text-red",
-                  )}
-                  title={`#${v.attempt}: ${v.passed ? "PASS" : "FAIL"}`}
-                >
-                  {v.passed ? "\u2713" : "\u2717"}
-                </span>
+                <Tooltip key={i}>
+                  <TooltipTrigger asChild>
+                    <span
+                      className={cn(
+                        "w-2.5 h-2.5 rounded-full text-[6px] flex items-center justify-center font-bold cursor-default",
+                        v.passed ? "bg-green/30 text-green" : "bg-red/30 text-red",
+                      )}
+                    >
+                      {v.passed ? "\u2713" : "\u2717"}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    #{v.attempt}: {v.passed ? "PASS" : "FAIL"}
+                  </TooltipContent>
+                </Tooltip>
               ))}
             </div>
             <span className="text-[8px] text-overlay0 ml-auto">
@@ -124,9 +130,16 @@ export function AgentNode({ data }) {
             </span>
           </div>
           {latestError && (
-            <div className="text-[7px] text-peach mt-1 truncate" title={latestError}>
-              {"\u26A0"} {latestError}
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-[7px] text-peach mt-1 truncate cursor-default">
+                  {"\u26A0"} {latestError}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[300px] whitespace-pre-wrap">
+                {latestError}
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       )}
