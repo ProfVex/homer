@@ -13,16 +13,10 @@ import "@xyflow/react/dist/style.css";
 import { useGraphData } from "@/hooks/useGraphData";
 import { TaskNode } from "./TaskNode";
 import { AgentNode } from "./AgentNode";
-import { FileOpNode } from "./FileOpNode";
-import { VerifyNode } from "./VerifyNode";
-import { OutcomeNode } from "./OutcomeNode";
 
 const nodeTypes = {
   task: TaskNode,
   agent: AgentNode,
-  fileop: FileOpNode,
-  verify: VerifyNode,
-  outcome: OutcomeNode,
 };
 
 const defaultEdgeOptions = {
@@ -104,7 +98,6 @@ function DAGGraphInner({ agents, files, verify, milestones, getConflicts, rerout
             if (s === "verifying") return "#f9e2af";
             return "#89b4fa";
           }
-          if (n.type === "outcome") return n.data?.status === "done" ? "#a6e3a1" : "#f38ba8";
           return "#585b70";
         }}
         maskColor="rgba(17, 17, 27, 0.8)"
