@@ -2,23 +2,23 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useHomer } from "@/hooks/useHomer";
 import { Header } from "@/components/Header";
 import { Roster } from "@/components/Roster";
-import { TerminalView } from "@/components/TerminalView";
+import { RepoTree } from "@/components/RepoTree";
 import { DAGGraph } from "@/components/graph/DAGGraph";
+import { TerminalView } from "@/components/TerminalView";
 import { ResumeModal } from "@/components/ResumeModal";
 
 export default function App() {
   const homer = useHomer();
   const [selectedId, setSelectedId] = useState(null);
-  const [showGraph, setShowGraph] = useState(true);
 
-  // Auto-select first agent, or latest spawned
+  // Auto-select latest working agent
   const effectiveSelected = useMemo(() => {
     if (selectedId && homer.state.agents.some(a => a.id === selectedId)) return selectedId;
     if (homer.state.agents.length > 0) return homer.state.agents[homer.state.agents.length - 1].id;
     return null;
   }, [selectedId, homer.state.agents]);
 
-  // Auto-select newly spawned agents
+  // Auto-select newly spawned
   useEffect(() => {
     if (homer.state.agents.length > 0) {
       const latest = homer.state.agents[homer.state.agents.length - 1];
@@ -31,59 +31,51 @@ export default function App() {
     [homer.state.agents, effectiveSelected]
   );
 
-  const handleSelect = useCallback((id) => {
-    setSelectedId(id);
-  }, []);
+  const handleSelect = useCallback((id) => setSelectedId(id), []);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden bg-base">
       <Header
         state={homer.state}
         onSpawn={() => homer.spawnAgent()}
         onSetTool={(id) => homer.setTool(id)}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar — Team roster */}
-        <Roster
-          agents={homer.state.agents}
-          selectedId={effectiveSelected}
-          onSelect={handleSelect}
-          onSpawn={() => homer.spawnAgent()}
-          files={homer.files}
-          verify={homer.verify}
-        />
+      <div className="flex flex-1 overflow-hidden p-2 gap-2">
+        {/* Left sidebar — Team + Repo tree */}
+        <div className="flex flex-col w-64 shrink-0 gap-2 overflow-hidden">
+          <div className="flex-1 overflow-hidden rounded-2xl bg-mantle/60 border border-surface0/15">
+            <Roster
+              agents={homer.state.agents}
+              selectedId={effectiveSelected}
+              onSelect={handleSelect}
+              onSpawn={() => homer.spawnAgent()}
+              files={homer.files}
+              verify={homer.verify}
+            />
+          </div>
+          <div className="rounded-2xl bg-mantle/60 border border-surface0/15 overflow-hidden shrink-0">
+            <RepoTree files={homer.files} getConflicts={homer.getConflicts} />
+          </div>
+        </div>
 
-        {/* Main area — Graph + Terminal vertical split */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Graph toggle */}
-          <button
-            onClick={() => setShowGraph(g => !g)}
-            className="flex items-center gap-1.5 px-3 py-1 text-xs text-overlay0 hover:text-text bg-mantle border-b border-surface0 shrink-0 cursor-pointer transition-colors"
-          >
-            <span className={`transition-transform ${showGraph ? "rotate-90" : ""}`}>&#9656;</span>
-            Pipeline Graph
-          </button>
+        {/* Center — DAG Graph (hero) */}
+        <div className="flex-1 overflow-hidden rounded-2xl bg-crust/40 border border-surface0/15">
+          <DAGGraph
+            agents={homer.state.agents}
+            files={homer.files}
+            verify={homer.verify}
+            milestones={homer.milestones}
+            getConflicts={homer.getConflicts}
+            reroutes={homer.reroutes}
+            onSelectAgent={handleSelect}
+          />
+        </div>
 
-          {/* DAG Graph pane */}
-          {showGraph && (
-            <div className="h-[40%] min-h-[160px] border-b border-surface0 shrink-0">
-              <DAGGraph
-                agents={homer.state.agents}
-                files={homer.files}
-                verify={homer.verify}
-                milestones={homer.milestones}
-                getConflicts={homer.getConflicts}
-                reroutes={homer.reroutes}
-                onSelectAgent={handleSelect}
-              />
-            </div>
-          )}
-
-          {/* Terminal view */}
+        {/* Right — Terminal output for selected agent */}
+        <div className="flex-1 min-w-[500px] flex flex-col overflow-hidden rounded-2xl bg-crust/40 border border-surface0/15">
           <TerminalView
             agent={selectedAgent}
-            output={homer.output.get(effectiveSelected) || ""}
             onOutput={homer.onOutput}
             onSendInput={homer.sendInput}
             onKill={homer.killAgent}
@@ -91,9 +83,9 @@ export default function App() {
         </div>
       </div>
 
-      {/* Connection indicator */}
+      {/* Connection pill */}
       {!homer.connected && (
-        <div className="fixed bottom-4 right-4 bg-red/15 text-red border border-red/30 rounded px-3 py-1.5 text-xs">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red/10 text-red border border-red/20 rounded-full px-4 py-1.5 text-xs backdrop-blur-sm shadow-lg">
           Disconnected - reconnecting...
         </div>
       )}

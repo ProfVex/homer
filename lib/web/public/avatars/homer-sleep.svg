@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- bootleg homer: sleeping on the job at sector 7-G -->
+  <!-- Cranium -->
+  <path d="M 18 50 C 14 30 22 10 48 6 C 68 3 78 16 80 32 L 80 50" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- Jaw -->
+  <path d="M 18 50 C 16 62 20 76 36 82 Q 52 88 66 80 C 76 74 80 62 80 50" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- Ear -->
+  <ellipse cx="14" cy="48" rx="5" ry="8" fill="#FFD700" stroke="#000" stroke-width="2"/>
+  <!-- Squiggly closed eyes (wavy lines) -->
+  <path d="M 24 28 Q 30 24 36 28 Q 42 32 48 28" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 50 26 Q 56 22 62 26 Q 68 30 74 26" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Bridge -->
+  <ellipse cx="50" cy="36" rx="8" ry="5" fill="#FFD700"/>
+  <!-- Big nose -->
+  <ellipse cx="52" cy="46" rx="8" ry="7" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- Open snoring mouth -->
+  <ellipse cx="50" cy="70" rx="14" ry="10" fill="#222" stroke="#000" stroke-width="2.5"/>
+  <!-- Drool stream -->
+  <path d="M 60 76 Q 66 84 64 94 Q 63 98 66 100" fill="none" stroke="#89B4FA" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="66" cy="100" rx="4" ry="2" fill="#89B4FA" opacity="0.5"/>
+  <!-- Hairs -->
+  <path d="M 40 10 C 36 -2 34 0 38 8" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 48 8 C 50 -4 54 -2 50 7" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <!-- ZZZ floating -->
+  <text x="72" y="24" font-family="Comic Sans MS,cursive" font-size="12" font-weight="bold" fill="#89B4FA" opacity="0.9">Z</text>
+  <text x="80" y="14" font-family="Comic Sans MS,cursive" font-size="16" font-weight="bold" fill="#89B4FA" opacity="0.7">Z</text>
+  <text x="90" y="6" font-family="Comic Sans MS,cursive" font-size="10" font-weight="bold" fill="#89B4FA" opacity="0.5">Z</text>
+</svg>

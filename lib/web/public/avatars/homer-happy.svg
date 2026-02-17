@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- bootleg homer: pure bliss (food nearby probably) -->
+  <!-- Cranium -->
+  <path d="M 18 50 C 14 30 22 10 48 6 C 68 3 78 16 80 32 L 80 50" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- Jaw -->
+  <path d="M 18 50 C 16 62 20 76 36 82 Q 52 88 66 80 C 76 74 80 62 80 50" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- Ear -->
+  <ellipse cx="14" cy="48" rx="5" ry="8" fill="#FFD700" stroke="#000" stroke-width="2"/>
+  <!-- Closed happy eyes (upward arcs) -->
+  <path d="M 24 28 Q 38 18 52 28" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 48 26 Q 62 16 76 26" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <!-- Rosy pink cheeks -->
+  <circle cx="28" cy="44" r="7" fill="#F9A8D4" opacity="0.45"/>
+  <circle cx="72" cy="42" r="7" fill="#F9A8D4" opacity="0.45"/>
+  <!-- Bridge -->
+  <ellipse cx="50" cy="36" rx="8" ry="5" fill="#FFD700"/>
+  <!-- Big nose -->
+  <ellipse cx="52" cy="46" rx="8" ry="7" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- Huge grin -->
+  <path d="M 28 64 Q 50 86 72 64" fill="#222" stroke="#000" stroke-width="2.5"/>
+  <!-- Tongue -->
+  <ellipse cx="50" cy="76" rx="8" ry="5" fill="#F472B6" stroke="#000" stroke-width="1"/>
+  <!-- Hairs -->
+  <path d="M 40 10 C 36 -2 34 0 38 8" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 48 8 C 50 -4 54 -2 50 7" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <!-- Joy lines near ears -->
+  <path d="M 20 38 L 14 36" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 20 42 L 13 42" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 20 46 L 14 48" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 82 36 L 88 34" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 82 40 L 89 40" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 82 44 L 88 46" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

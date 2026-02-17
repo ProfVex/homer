@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- bootleg homer: big brain mode (crayon removed) -->
+  <!-- MASSIVE expanded cranium -->
+  <path d="M 14 54 C 10 28 18 2 48 -2 C 72 -5 88 12 90 30 L 90 54" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- smaller jaw -->
+  <path d="M 14 54 C 12 64 18 76 34 82 Q 50 88 62 80 C 72 74 76 64 76 54" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- brain wrinkle lines visible through skull -->
+  <path d="M 22 14 Q 34 8 46 16 Q 58 8 70 16 Q 80 10 88 18" fill="none" stroke="#E8B800" stroke-width="2" opacity="0.6"/>
+  <path d="M 18 26 Q 32 20 46 28 Q 58 20 72 28 Q 82 22 90 28" fill="none" stroke="#E8B800" stroke-width="2" opacity="0.6"/>
+  <path d="M 20 38 Q 36 32 50 38 Q 62 32 76 38" fill="none" stroke="#E8B800" stroke-width="1.5" opacity="0.4"/>
+  <!-- ear -->
+  <ellipse cx="10" cy="52" rx="5" ry="7" fill="#FFD700" stroke="#000" stroke-width="2"/>
+  <!-- eyes -->
+  <ellipse cx="36" cy="48" rx="13" ry="10" fill="#FFF" stroke="#000" stroke-width="2.5"/>
+  <ellipse cx="58" cy="47" rx="13" ry="10" fill="#FFF" stroke="#000" stroke-width="2.5"/>
+  <!-- glasses frames (circles around eyes) -->
+  <circle cx="36" cy="48" r="14" fill="none" stroke="#000" stroke-width="2"/>
+  <circle cx="58" cy="47" r="14" fill="none" stroke="#000" stroke-width="2"/>
+  <!-- glasses bridge line -->
+  <line x1="50" y1="47" x2="44" y2="48" stroke="#000" stroke-width="2"/>
+  <!-- bridge -->
+  <ellipse cx="48" cy="56" rx="7" ry="4" fill="#FFD700"/>
+  <!-- knowing small pupils -->
+  <circle cx="38" cy="48" r="2.5" fill="#000"/>
+  <circle cx="60" cy="47" r="2.5" fill="#000"/>
+  <!-- nose -->
+  <ellipse cx="48" cy="62" rx="7" ry="6" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- smug smile -->
+  <path d="M 38 74 Q 50 80 62 74" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+  <!-- single dignified hair -->
+  <path d="M 48 -2 C 50 -10 54 -8 50 -2" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- sparkle symbols -->
+  <text x="82" y="12" font-size="10" fill="#FBBF24">&#x2728;</text>
+  <text x="2" y="10" font-size="8" fill="#FBBF24">&#x2728;</text>
+  <text x="86" y="42" font-size="7" fill="#FBBF24">&#x2728;</text>
+</svg>

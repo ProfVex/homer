@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* ── Catppuccin Mocha Theme ──────────────────────────────────── */
+@theme {
+  --color-base: #1e1e2e;
+  --color-mantle: #181825;
+  --color-crust: #11111b;
+  --color-surface0: #313244;
+  --color-surface1: #45475a;
+  --color-surface2: #585b70;
+  --color-overlay0: #6c7086;
+  --color-overlay1: #7f849c;
+  --color-text: #cdd6f4;
+  --color-subtext0: #a6adc8;
+  --color-subtext1: #bac2de;
+  --color-lavender: #b4befe;
+  --color-blue: #89b4fa;
+  --color-sapphire: #74c7ec;
+  --color-sky: #89dceb;
+  --color-teal: #94e2d5;
+  --color-green: #a6e3a1;
+  --color-yellow: #f9e2af;
+  --color-peach: #fab387;
+  --color-maroon: #eba0ac;
+  --color-red: #f38ba8;
+  --color-mauve: #cba6f7;
+  --color-pink: #f5c2e7;
+  --color-flamingo: #f2cdcd;
+  --color-rosewater: #f5e0dc;
+}
+
+/* ── Base ─────────────────────────────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  background: var(--color-base);
+  color: var(--color-text);
+  font-family: -apple-system, "Inter", "SF Pro Display", system-ui, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Monospace only for terminal/code areas */
+pre, code, .font-mono {
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ── Scrollbar (thin, subtle) ────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-surface0); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-surface1); }
+
+/* ── ANSI Color Classes (terminal output rendering) ───────────── */
+.ansi-bold { font-weight: 600; }
+.ansi-dim { opacity: 0.5; }
+.ansi-italic { font-style: italic; }
+.ansi-underline { text-decoration: underline; }
+.ansi-fg-black { color: #45475a; }
+.ansi-fg-red { color: #f38ba8; }
+.ansi-fg-green { color: #a6e3a1; }
+.ansi-fg-yellow { color: #f9e2af; }
+.ansi-fg-blue { color: #89b4fa; }
+.ansi-fg-magenta { color: #cba6f7; }
+.ansi-fg-cyan { color: #89dceb; }
+.ansi-fg-white { color: #cdd6f4; }
+.ansi-fg-bright-black { color: #585b70; }
+.ansi-fg-bright-red { color: #f38ba8; }
+.ansi-fg-bright-green { color: #a6e3a1; }
+.ansi-fg-bright-yellow { color: #f9e2af; }
+.ansi-fg-bright-blue { color: #89b4fa; }
+.ansi-fg-bright-magenta { color: #cba6f7; }
+.ansi-fg-bright-cyan { color: #89dceb; }
+.ansi-fg-bright-white { color: #cdd6f4; }
+.ansi-bg-black { background: #45475a; }
+.ansi-bg-red { background: #f38ba8; }
+.ansi-bg-green { background: #a6e3a1; }
+.ansi-bg-yellow { background: #f9e2af; }
+.ansi-bg-blue { background: #89b4fa; }
+.ansi-bg-magenta { background: #cba6f7; }
+.ansi-bg-cyan { background: #89dceb; }
+.ansi-bg-white { background: #cdd6f4; }
+
+/* ── React Flow dark theme overrides ─────────────────────────── */
+.react-flow__background { background: transparent !important; }
+.react-flow__edge-path { stroke: var(--color-surface2); stroke-width: 1.5; }
+.react-flow__edge.animated path { animation: dashdraw 0.5s linear infinite; stroke-dasharray: 5; }
+.react-flow__minimap { background: var(--color-mantle) !important; border: 1px solid var(--color-surface0) !important; border-radius: 12px; overflow: hidden; }
+.react-flow__controls { background: var(--color-mantle) !important; border: 1px solid var(--color-surface0) !important; border-radius: 12px; overflow: hidden; }
+.react-flow__controls button { background: var(--color-mantle) !important; border-color: var(--color-surface0) !important; color: var(--color-subtext0) !important; }
+.react-flow__controls button:hover { background: var(--color-surface0) !important; }
+.react-flow__controls button svg { fill: var(--color-subtext0) !important; }
+.react-flow__attribution { display: none !important; }
+.react-flow__node { cursor: pointer; }
+.react-flow__node.selected { outline: none !important; }
+@keyframes dashdraw { to { stroke-dashoffset: -10; } }

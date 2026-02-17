@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- bootleg homer: sector 7-G safety inspector -->
+  <!-- cranium -->
+  <path d="M 18 50 C 14 30 22 10 48 6 C 68 3 78 16 80 32 L 80 50" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- jaw -->
+  <path d="M 18 50 C 16 62 20 76 36 82 Q 52 88 66 80 C 76 74 80 62 80 50" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- ear -->
+  <ellipse cx="14" cy="48" rx="5" ry="8" fill="#FFD700" stroke="#000" stroke-width="2"/>
+  <!-- eyes -->
+  <ellipse cx="38" cy="28" rx="15" ry="12" fill="#FFF" stroke="#000" stroke-width="2.5"/>
+  <ellipse cx="62" cy="26" rx="15" ry="12" fill="#FFF" stroke="#000" stroke-width="2.5"/>
+  <!-- bridge -->
+  <ellipse cx="50" cy="36" rx="8" ry="5" fill="#FFD700"/>
+  <!-- one eyebrow raised smugly, other normal -->
+  <path d="M 23 20 Q 38 22 53 20" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 47 12 Q 62 8 77 16" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- pupils looking sideways -->
+  <circle cx="42" cy="29" r="3.5" fill="#000"/>
+  <circle cx="66" cy="27" r="3.5" fill="#000"/>
+  <!-- big nose -->
+  <ellipse cx="52" cy="46" rx="8" ry="7" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+  <!-- upper lip line -->
+  <path d="M 38 58 Q 48 55 56 58" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- confident smirk -->
+  <path d="M 36 64 Q 52 72 68 60" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- hairs -->
+  <path d="M 40 10 C 36 -2 34 0 38 8" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 48 8 C 50 -4 54 -2 50 7" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- glowing nuclear rod on right -->
+  <rect x="80" y="48" width="6" height="36" rx="2" fill="#4ADE80" stroke="#000" stroke-width="1"/>
+  <!-- animated glow on rod -->
+  <rect x="80" y="48" width="6" height="36" rx="2" fill="#4ADE80" opacity="0.4">
+    <animate attributeName="opacity" values="0.2;0.7;0.2" dur="1.5s" repeatCount="indefinite"/>
+  </rect>
+  <!-- animated expanding glow circle -->
+  <circle cx="83" cy="46" r="6" fill="#4ADE80" opacity="0.2">
+    <animate attributeName="r" values="4;10;4" dur="1.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0.05;0.3" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>

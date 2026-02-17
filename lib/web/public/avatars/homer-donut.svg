@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- HOMER DONUT - proper Homer head, spoderman energy -->
+
+  <!-- HEAD SHAPE: Homer's head is a tall cylinder-ish shape -->
+  <!-- back of cranium (bald dome) -->
+  <path d="M 18 50 C 14 30 22 10 48 6 C 68 3 78 16 80 32 L 80 50"
+        fill="#FFD700" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- jaw/chin area - squared off, connects to cranium -->
+  <path d="M 18 50 C 16 62 20 76 36 82 Q 52 88 66 80 C 76 74 80 62 80 50"
+        fill="#FFD700" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- eye whites - BIG, sitting high on head, protruding upward -->
+  <!-- they overlap the top of the head outline - this is the key Homer look -->
+  <ellipse cx="38" cy="28" rx="15" ry="12" fill="#FFF" stroke="#000" stroke-width="2.5"/>
+  <ellipse cx="62" cy="26" rx="15" ry="12" fill="#FFF" stroke="#000" stroke-width="2.5"/>
+
+  <!-- yellow skin bridge between eyes and over nose -->
+  <ellipse cx="50" cy="36" rx="8" ry="5" fill="#FFD700"/>
+
+  <!-- derpy pupils - different sizes, looking different ways -->
+  <circle cx="34" cy="30" r="4.5" fill="#000"/>
+  <circle cx="66" cy="24" r="5.5" fill="#000"/>
+
+  <!-- BIG round nose - hangs down between eyes and mouth -->
+  <ellipse cx="52" cy="46" rx="8" ry="7" fill="#FFD700" stroke="#000" stroke-width="2.5"/>
+
+  <!-- upper lip / mouth area -->
+  <path d="M 40 54 Q 52 50 62 54" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- big dumb grin - drooling over donut -->
+  <path d="M 30 64 Q 46 78 66 64" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- overbite - upper teeth peeking -->
+  <rect x="40" y="63" width="6" height="4" rx="1" fill="#FFF" stroke="#000" stroke-width="1"/>
+  <rect x="48" y="63" width="6" height="4" rx="1" fill="#FFF" stroke="#000" stroke-width="1"/>
+
+  <!-- drool -->
+  <path d="M 62 66 Q 66 76 64 84" fill="none" stroke="#87CEEB" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- 5 o'clock shadow stubble -->
+  <circle cx="34" cy="72" r="1.2" fill="#C8A800" opacity="0.5"/>
+  <circle cx="40" cy="76" r="1" fill="#C8A800" opacity="0.4"/>
+  <circle cx="48" cy="77" r="1.2" fill="#C8A800" opacity="0.5"/>
+  <circle cx="54" cy="74" r="1" fill="#C8A800" opacity="0.4"/>
+
+  <!-- M-shaped wispy hairs on bald dome -->
+  <path d="M 40 10 C 36 -2 34 0 38 8" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 48 8 C 50 -4 54 -2 50 7" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- ear -->
+  <ellipse cx="14" cy="48" rx="5" ry="8" fill="#FFD700" stroke="#000" stroke-width="2"/>
+  <path d="M 12 46 Q 14 48 12 51" fill="none" stroke="#000" stroke-width="1.5"/>
+
+  <!-- DONUT -->
+  <ellipse cx="86" cy="54" rx="12" ry="11" fill="#FF69B4" stroke="#000" stroke-width="2"/>
+  <ellipse cx="86" cy="54" rx="5" ry="4" fill="#FFD700" stroke="#000" stroke-width="1.5"/>
+  <rect x="78" y="48" width="4" height="2" rx="1" fill="#00F" transform="rotate(25 80 49)"/>
+  <rect x="90" y="48" width="4" height="2" rx="1" fill="#0F0" transform="rotate(-15 92 49)"/>
+  <rect x="84" y="62" width="4" height="2" rx="1" fill="#F00" transform="rotate(10 86 63)"/>
+</svg>

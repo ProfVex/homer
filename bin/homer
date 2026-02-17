@@ -1,15 +1,84 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 /**
- * Homer — Autonomous agent TUI wrapping Claude Code.
+ * Homer — Agent orchestrator with web dashboard.
  *
- * Opens a terminal dashboard with embedded Claude Code PTY.
- * Claims GitHub issues, spawns agents, shows live output.
- *
- * Usage:
- *   homer [--repo OWNER/REPO] [--agents N] [--tool claude]
+ * Starts the engine + web server, opens browser.
+ * Usage: homer [--repo OWNER/REPO] [--tool claude] [--auto] [--port 3457]
  */
 
-import { start } from "../lib/app.js";
+import { HomerEngine } from "../lib/engine.js";
+import { startServer } from "../lib/server.js";
 
-start(process.argv.slice(2));
+// Parse CLI args
+const argv = process.argv.slice(2);
+const opts = {};
+for (let i = 0; i < argv.length; i++) {
+  const a = argv[i];
+  if ((a === "--repo" || a === "-r") && argv[i + 1]) opts.repo = argv[++i];
+  else if (a.startsWith("--repo=")) opts.repo = a.split("=").slice(1).join("=");
+  else if (a === "--tool" && argv[i + 1]) opts.tool = argv[++i];
+  else if (a === "--role" && argv[i + 1]) opts.role = argv[++i];
+  else if (a === "--model" && argv[i + 1]) opts.model = argv[++i];
+  else if (a === "--auto") opts.auto = true;
+  else if (a === "--agents" && argv[i + 1]) opts.maxAgents = parseInt(argv[++i], 10) || 5;
+  else if (a === "--label" && argv[i + 1]) opts.prefix = argv[++i];
+  else if (a === "--permission-mode" && argv[i + 1]) opts.permissionMode = argv[++i];
+  else if (a === "--port" && argv[i + 1]) opts.port = parseInt(argv[++i], 10);
+  else if (a === "--resume") opts.resume = true;
+  else if (a === "--fresh") opts.fresh = true;
+  else if (a === "--no-open") opts.noOpen = true;
+  else if (a === "-h" || a === "--help") {
+    console.log(`Homer ◆ Agent Orchestrator (Web)
+
+USAGE:
+  homer                         Start with tool picker in browser
+  homer --tool claude           Start Claude Code directly
+  homer --auto                  Auto-work through issues/stories
+
+OPTIONS:
+  --tool NAME               AI CLI to use (claude, codex, aider)
+  --role ROLE               Agent role (planner, coder, data, api, researcher, verifier)
+  --repo, -r OWNER/REPO     Target repo (default: auto-detect)
+  --auto                    Auto-claim and work through tasks
+  --agents N                Max concurrent agents (default: 5)
+  --port PORT               Web server port (default: 3457)
+  --resume                  Auto-resume previous session
+  --fresh                   Start clean (ignore previous session)
+  --no-open                 Don't auto-open browser
+  -h, --help                This help`);
+    process.exit(0);
+  }
+}
+
+// Start engine
+const engine = new HomerEngine(opts);
+
+// Start web server
+const port = opts.port || 3457;
+const { url } = startServer(engine, { port });
+
+console.log(`◆ Homer listening on ${url}`);
+
+// Auto-open browser
+if (!opts.noOpen) {
+  try {
+    const { execSync } = await import("node:child_process");
+    const cmd = process.platform === "darwin" ? "open" : "xdg-open";
+    execSync(`${cmd} ${url}`, { stdio: "ignore" });
+  } catch {}
+}
+
+// Init engine (async — detects tools, loads PRD, etc.)
+engine.init().catch(err => {
+  console.error("Homer init error:", err.message);
+});
+
+// Graceful shutdown
+const shutdown = () => {
+  console.log("\n◆ Homer shutting down...");
+  engine.cleanup();
+  process.exit(0);
+};
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

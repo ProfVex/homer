@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- bootleg homer: terrified (marge found the credit card bill) -->
+  <!-- Cranium (PALE yellow) -->
+  <path d="M 18 50 C 14 30 22 10 48 6 C 68 3 78 16 80 32 L 80 50" fill="#E8D44D" stroke="#000" stroke-width="2.5"/>
+  <!-- Jaw (PALE yellow) -->
+  <path d="M 18 50 C 16 62 20 76 36 82 Q 52 88 66 80 C 76 74 80 62 80 50" fill="#E8D44D" stroke="#000" stroke-width="2.5"/>
+  <!-- Ear -->
+  <ellipse cx="14" cy="48" rx="5" ry="8" fill="#E8D44D" stroke="#000" stroke-width="2"/>
+  <!-- HUGE bulging eyes -->
+  <ellipse cx="38" cy="28" rx="17" ry="15" fill="#FFF" stroke="#000" stroke-width="2.5"/>
+  <ellipse cx="62" cy="26" rx="18" ry="15" fill="#FFF" stroke="#000" stroke-width="2.5"/>
+  <!-- Micro pupils (maximum fear) -->
+  <circle cx="38" cy="30" r="2" fill="#000"/>
+  <circle cx="62" cy="28" r="2" fill="#000"/>
+  <!-- Eyebrows way up -->
+  <path d="M 20 8 Q 38 -2 54 8" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 44 6 Q 62 -4 80 6" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <!-- Bridge -->
+  <ellipse cx="50" cy="36" rx="8" ry="5" fill="#E8D44D"/>
+  <!-- Big nose -->
+  <ellipse cx="52" cy="46" rx="8" ry="7" fill="#E8D44D" stroke="#000" stroke-width="2.5"/>
+  <!-- Wobbly scared mouth (zigzag) -->
+  <path d="M 32 70 Q 37 78 42 68 Q 47 78 52 68 Q 57 78 62 68 Q 67 78 70 70" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- 3 hairs straight up -->
+  <path d="M 40 10 C 36 -8 32 -6 38 6" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 48 8 C 48 -10 52 -8 50 5" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 56 10 C 60 -6 62 -4 57 7" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  <!-- Sweat drops -->
+  <ellipse cx="84" cy="18" rx="3" ry="5.5" fill="#87CEEB" opacity="0.7"/>
+  <ellipse cx="88" cy="36" rx="2.5" ry="4" fill="#87CEEB" opacity="0.5"/>
+  <ellipse cx="10" cy="22" rx="2" ry="4.5" fill="#87CEEB" opacity="0.6"/>
+  <!-- Shaking lines on sides -->
+  <path d="M 6 42 L 2 42" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 6 47 L 0 47" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 6 52 L 2 52" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 92 40 L 96 40" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 92 45 L 98 45" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M 92 50 L 96 50" stroke="#000" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

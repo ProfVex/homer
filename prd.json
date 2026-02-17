@@ -1,104 +1,146 @@
 {
   "project": "Homer",
-  "branchName": "homer/mvp-release",
-  "description": "Fix security issues, remove dead code, update README, add tests for MVP release",
+  "branchName": "homer/engine-hardening",
+  "description": "Harden Homer engine: structured agent protocol, memory feedback loop, timeouts, conflict detection, comprehensive tests",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Sanitize shell inputs in github.js",
-      "description": "As a user downloading Homer, I need shell command arguments to be sanitized so that malicious repo names or label values cannot execute arbitrary commands on my machine.",
+      "title": "Add agent sidecar protocol via status file",
+      "description": "As Homer, I need a reliable way to receive structured signals from agents instead of scraping HOMER_DONE from raw terminal output, so that any CLI tool (Claude Code, Cline, Aider, OpenRouter) can communicate status, files changed, and summaries back to Homer.",
       "acceptanceCriteria": [
-        "Create a shellEscape(str) helper that escapes shell metacharacters (single-quote wrapping with internal quote escaping)",
-        "Apply shellEscape to all interpolated values in github.js: repo, prefix, sessionId, num, summary, desc, color",
-        "Verify: a repo name like \"foo;rm -rf /\" does not execute the injected command",
-        "Verify: gh commands still work correctly with normal repo names like owner/repo",
+        "Create .homer/agents/{agent-id}/ directory when an agent spawns",
+        "Write .homer/agents/{agent-id}/task.json with the assigned task details on spawn",
+        "Engine watches for .homer/agents/{agent-id}/status.json via polling (500ms interval)",
+        "status.json schema: { status: 'done'|'blocked'|'progress', summary?: string, files_changed?: string[], error?: string }",
+        "When status.json appears with status='done', trigger verification (same as HOMER_DONE)",
+        "When status.json appears with status='blocked', trigger blocked flow (same as HOMER_BLOCKED)",
+        "Keep existing HOMER_DONE/HOMER_BLOCKED string detection as fallback for tools that don't write status.json",
+        "Inject instructions into agent prompt telling them to write status.json: 'echo {json} > .homer/agents/{id}/status.json'",
+        "Clean up .homer/agents/{agent-id}/ on agent cleanup",
+        "Add tests: status.json detection triggers verification, fallback to string detection works, cleanup removes directory",
         "Typecheck passes"
       ],
       "priority": 1,
       "passes": false,
-      "notes": "All gh() calls in github.js interpolate user-controlled strings directly into shell commands. Use single-quote escaping: str.replace(/'/g, \"'\\\"'\\\"'\") wrapped in single quotes."
+      "notes": "This is the foundation for all other improvements. The sidecar file approach works with ANY CLI tool because it's just a file write. No tool-specific integration needed."
     },
     {
       "id": "US-002",
-      "title": "Remove dead code and unused dependency",
-      "description": "As a developer, I want to ship only code that is actually used so the install is clean and users aren't confused by stale files.",
+      "title": "Add agent timeout and circuit breaker",
+      "description": "As a user, I need agents that hang to be automatically killed so they don't consume resources forever and block other work.",
       "acceptanceCriteria": [
-        "Delete lib/workloop.js (superseded by app.js agent management)",
-        "Delete empty dashboard/ directory",
-        "Remove term.js from package.json dependencies",
-        "Run npm install to update package-lock.json",
-        "Remove the npm test script or point it at a real test (see US-005)",
-        "Verify: node -e \"import('./lib/app.js')\" still succeeds",
+        "Add AGENT_TIMEOUT_MS constant (default: 30 minutes = 1800000ms)",
+        "Add AGENT_STALL_MS constant (default: 5 minutes = 300000ms) for detecting no-output stalls",
+        "Engine tracks lastOutputAt per agent, updated on every agent:output event",
+        "Every 30 seconds, engine checks all working agents: if (now - startedAt) > AGENT_TIMEOUT_MS, kill and reroute",
+        "Every 30 seconds, engine checks all working agents: if (now - lastOutputAt) > AGENT_STALL_MS, kill and reroute",
+        "Emit new event agent:timeout { id, reason: 'timeout'|'stall', elapsed } before killing",
+        "Timeout reason is included in reroute context so replacement agent knows why",
+        "Add --timeout CLI flag to override default (in minutes)",
+        "Add tests: agent exceeding timeout triggers kill, stall detection works, reroute receives timeout context",
         "Typecheck passes"
       ],
       "priority": 2,
       "passes": false,
-      "notes": "workloop.js is the v1 loop, not imported by app.js. term.js is listed in dependencies but never imported by any file. dashboard/ is an empty directory."
+      "notes": "Without this, a hung agent blocks auto-spawn from filling its slot. The stall detection catches agents that are alive but not producing output (stuck in a loop)."
     },
     {
       "id": "US-003",
-      "title": "Rewrite README.md for TUI architecture",
-      "description": "As a new user, I want an accurate README so I can understand what Homer does and how to install and use it.",
+      "title": "Write verification results to memory as episodes and rules",
+      "description": "As Homer's memory system, I need verification results to be recorded as structured episodes so that future agents benefit from past verification patterns.",
       "acceptanceCriteria": [
-        "README title and description match the actual TUI product (not the v1 stdin-pipe architecture)",
-        "Install section covers: prerequisites (node 18+, gh CLI, at least one AI CLI), npm install -g homer-cli, and git clone + npm link",
-        "Quick Start shows: homer (opens TUI), homer --tool claude, homer --auto",
-        "Features section covers: multi-agent TUI, PRD stories, GitHub issues, verification loop, session persistence, project index",
-        "Keyboard shortcuts section lists all actual keys: i, t, +, 1-9, Enter, Ctrl+A, Tab, c, w, r, q",
-        "CLI flags section lists all actual flags from parseArgs(): --repo, --tool, --model, --auto, --agents, --label, --permission-mode, --resume, --fresh, --init",
-        "Remove all references to: homer plan, homer status, homer sync, homer-watch, homer-watch, --max-iterations, --dry-run, stdin pipe architecture",
-        "Add a 'How It Works' section explaining: TUI spawns PTY → agent works → signals HOMER_DONE → Homer runs verification → re-injects errors or marks done",
-        "Include a screenshot placeholder or ASCII art of the TUI layout"
+        "After each verification run (pass or fail), call recordEpisode with event_type='verification'",
+        "Episode content includes: which checks ran, which passed, which failed, truncated error output (200 chars per check)",
+        "On verification pass after N>1 attempts: create a rule 'Task {key} needed {N} attempts, initial approach on {files} was wrong'",
+        "On verification fail: upsert rule scoped to the first touched file with the persistent error pattern",
+        "On task completion (done): strengthen all rules that were injected into this agent's prompt (they helped)",
+        "On task failure (max retries): weaken rules that were injected (they didn't help)",
+        "Add entity relations: for each failed check, add relation from error entity to file entities with 'caused_by'",
+        "Memory section injection (buildMemorySection) now includes verification-specific rules when task involves same files",
+        "Add tests: verification pass records success episode, failure records failure episode with error details, rules are created from repeated errors, rule confidence changes on success/failure",
+        "Typecheck passes"
       ],
       "priority": 3,
       "passes": false,
-      "notes": "Current README describes v1 architecture with multiple CLI commands that no longer exist. The actual product is a single TUI command."
+      "notes": "Currently extractMemories only runs AFTER agent completion and does shallow regex extraction. This change makes the verification loop actively teach the memory system in real-time."
     },
     {
       "id": "US-004",
-      "title": "Update .gitignore and fix auto-append behavior",
-      "description": "As a user, I don't want Homer silently modifying my .gitignore without telling me, and the project .gitignore should cover all generated files.",
+      "title": "Add engine-level file conflict detection",
+      "description": "As Homer, I need to detect when two active agents are modifying the same files so I can warn or block before git conflicts corrupt the repo.",
       "acceptanceCriteria": [
-        "Project .gitignore includes: node_modules/, .DS_Store, *.log, .env, .homer/, .claude/, coverage/, dist/, *.tgz",
-        "In context.js writeProjectContext(): change the auto-append to .gitignore to log a message instead of silently modifying (or make it opt-in)",
-        "Alternative: keep auto-append but add a comment '# Added by Homer' before the .homer/ line so users know what changed it",
+        "Engine maintains activeFiles: Map<filePath, Set<agentId>> tracking which agents touch which files",
+        "On agent:output, extract file paths (same regex as existing extractFilePaths) and update activeFiles",
+        "Before spawning a new agent, check if any files from the task's likely scope overlap with active agents' files",
+        "Emit new event conflict:detected { agentId, conflictingAgentId, files } when overlap detected",
+        "In auto mode, delay spawning an overlapping task until the conflicting agent finishes",
+        "Add getConflicts() method to engine (move logic from frontend useHomer hook to engine)",
+        "Include conflict info in getState() response: conflicts: [{file, agents: [id1, id2]}]",
+        "Add tests: two agents touching same file triggers conflict event, auto mode delays conflicting spawn, getState includes conflict data",
         "Typecheck passes"
       ],
       "priority": 4,
       "passes": false,
-      "notes": "context.js line 481 silently appends .homer/ to the user's project .gitignore. This is surprising behavior for a CLI tool."
+      "notes": "Currently the frontend does file conflict detection via regex on client-side output buffers. This moves it to the engine where it can actually prevent damage."
     },
     {
       "id": "US-005",
-      "title": "Add basic test suite",
-      "description": "As a developer, I want basic tests to catch regressions and verify core functionality works.",
+      "title": "Add comprehensive engine orchestration tests",
+      "description": "As a developer, I need tests for the real orchestration logic (verification loop, rerouting, memory injection, timeout) not just constructor/getState tests.",
       "acceptanceCriteria": [
-        "Create tests/ directory with at least 3 test files",
-        "Test 1: tools.js — detectTools() returns array, each item has id/name/command/available fields",
-        "Test 2: tasks.js — loadPRD() with a fixture prd.json returns correct structure, nextStory() returns first incomplete story, prdProgress() returns correct counts",
-        "Test 3: context.js — repoSlug() produces valid slugs, buildSystemPrompt() returns string containing HOMER_DONE instruction",
-        "Update package.json test script to run the tests (node --test or a simple runner)",
-        "npm test passes with exit code 0",
+        "Test verification flow: mock agent output with HOMER_DONE, verify _handleDone is called, verify runVerification is triggered",
+        "Test reroute flow: agent fails MAX_VERIFY times, verify _reroute creates new agent with failure context",
+        "Test reroute limit: agent rerouted MAX_REROUTES times, verify status becomes 'failed'",
+        "Test auto-spawn: in auto mode, completing one task spawns next from PRD",
+        "Test HOMER_BLOCKED detection: agent output includes HOMER_BLOCKED, verify _handleBlocked is called",
+        "Test extractFilePaths: various file path patterns extracted correctly from ANSI output",
+        "Test taskKey: story agents, issue agents, interactive agents return correct keys",
+        "Test stripAnsi: handles color codes, OSC sequences, complex sequences, empty strings",
+        "Test memory injection: verify buildMemorySection is called during agent prompt construction (requires mocking)",
+        "Test _trimBuffer: buffer exceeding max is trimmed while preserving verify history",
+        "All tests use bun:test (describe/test/expect), no external test framework",
         "Typecheck passes"
       ],
       "priority": 5,
       "passes": false,
-      "notes": "Currently npm test points at tests/run.sh which doesn't exist. Use Node 18+ built-in test runner (node --test) to avoid adding a test framework dependency."
+      "notes": "The current engine.test.js only tests constructor, getState, setTool, cleanup, and emitState. The real value is in the orchestration logic that has ZERO test coverage."
     },
     {
       "id": "US-006",
-      "title": "Git commit all lib/ files and tag v0.2.0",
-      "description": "As a maintainer, I need all source code committed to git so the repo is complete when users clone it.",
+      "title": "Add frontend utility and hook tests",
+      "description": "As a developer, I need tests for the React frontend utilities (ANSI parser, file extraction, time formatting) and the useHomer hook's derived state logic.",
       "acceptanceCriteria": [
-        "git add lib/ — all 8 files in lib/ are staged",
-        "All other changes (package.json, .gitignore, deleted files) are staged",
-        "Single commit with message describing the v2 TUI rewrite",
-        "git tag v0.2.0",
-        "git status shows clean working tree"
+        "Create lib/web/src/__tests__/utils.test.js with tests for: stripAnsi, ansiToHtml, extractFilePaths, formatElapsed, formatRelative, ROLES, STATUS_COLORS",
+        "Test ansiToHtml: bold, dim, italic, underline, all 8 colors, bright colors, reset, nested spans, HTML escaping",
+        "Test extractFilePaths: src/foo.js extracted, nested paths work, non-matching paths ignored, deduplication, trailing punctuation stripped",
+        "Test formatElapsed: seconds, minutes, hours formatted correctly",
+        "Test formatRelative: relative timestamps formatted as m:ss",
+        "Tests run via bun test from lib/web/ directory (add test script to lib/web/package.json)",
+        "Typecheck passes"
       ],
       "priority": 6,
       "passes": false,
-      "notes": "CRITICAL: lib/ is currently untracked. The entire application code has never been committed. This must be done before any release."
+      "notes": "The frontend utils have pure functions that are easy to unit test. The ANSI parser especially needs tests since it's handling untrusted terminal output."
+    },
+    {
+      "id": "US-007",
+      "title": "Add structured logging with event emission for observability",
+      "description": "As a developer running Homer, I need structured log output so I can debug issues and understand what the engine is doing without reading raw terminal output.",
+      "acceptanceCriteria": [
+        "Create lib/logger.js with a minimal structured logger: log(level, event, data)",
+        "Levels: debug, info, warn, error",
+        "Output format: JSON lines to stderr (one JSON object per line)",
+        "Each log line includes: ts (ISO), level, event (string), and spread data fields",
+        "Add logging at key engine points: agent spawn, agent done, verify start/result, reroute, timeout, memory extraction",
+        "Add --verbose CLI flag to enable debug-level logging (default: info)",
+        "Add --quiet CLI flag to suppress all logging except errors",
+        "Logger is a simple module export (no class, no singleton state beyond log level)",
+        "Add tests: log output is valid JSON, levels are filtered correctly, event names are included",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "Currently Homer uses console.log/error sporadically. Structured logs let users pipe Homer's output to monitoring tools and make debugging tractable."
     }
   ]
 }
