@@ -44,19 +44,38 @@ Named after Homer Simpson — he may not look like he's working, but somehow thi
 ## Install
 
 ```bash
-# npm (global)
+# Install globally (requires Bun)
+bun add -g homer-cli
+
+# Or with npm
 npm install -g homer-cli
 
-# or clone
+# Verify
+homer --help
+```
+
+> **`homer` not found?** Bun's global bin directory (`~/.bun/bin`) may not be on your PATH. Add it:
+> ```bash
+> echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.zshrc
+> echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.zshrc
+> source ~/.zshrc
+> ```
+> (Use `~/.bashrc` instead if you're on bash.)
+
+### Development (from source)
+
+```bash
 git clone https://github.com/ProfVex/homer.git
-cd homer && npm install && npm link
+cd homer && bun install
+bun link
+homer --help
 ```
 
 ### Prerequisites
 
 | Tool | Required | Install |
 |------|----------|---------|
-| Node.js | v18+ | [nodejs.org](https://nodejs.org) |
+| Bun | v1.0+ | `curl -fsSL https://bun.sh/install \| bash` or `brew install oven-sh/bun/bun` |
 | `gh` CLI | For GitHub issues | `brew install gh` then `gh auth login` |
 | At least one AI CLI | Yes | See below |
 
@@ -114,7 +133,7 @@ This verification loop is inspired by [Ralph](https://github.com/ProfVex/ralph) 
 | `c` | Rebuild project index |
 | `w` | Show workflow history |
 | `r` | Refresh sidebar |
-| `q` / `Ctrl+C` | Quit |
+| `q` / `Ctrl+C` | Quit (press twice to confirm) |
 
 **Terminal mode** (typing into an agent — press `Ctrl+A` to exit):
 
@@ -223,7 +242,7 @@ Ralph uses `prd.json` files (Product Requirement Documents) to define user stori
 ## Credits
 
 - **Homer** and **Ralph** are named after characters from *The Simpsons*, created by Matt Groening. All Simpsons references are used as fan tributes — this project has no affiliation with 20th Century Fox or The Simpsons.
-- Built with [blessed](https://github.com/chjj/blessed) for the TUI and [node-pty](https://github.com/microsoft/node-pty) for real terminal emulation.
+- Built with [OpenTUI](https://github.com/anomalyco/opentui) for the TUI, [ghostty-opentui](https://github.com/anomalyco/ghostty-opentui) for terminal rendering, and [node-pty](https://github.com/microsoft/node-pty) for real PTY emulation.
 - Designed to wrap [Claude Code](https://claude.ai), [Codex CLI](https://github.com/openai/codex), [Aider](https://github.com/paul-gauthier/aider), and other AI coding tools.
 - Created by [@ProfVex](https://github.com/ProfVex).
 

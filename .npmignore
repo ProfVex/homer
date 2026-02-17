@@ -1,0 +1,3 @@
+# Intentionally empty — package.json "files" field controls what's published.
+# This file exists to prevent npm from falling back to .gitignore exclusions,
+# which would block lib/web/dist/ from being included in the tarball.
